@@ -1,0 +1,4 @@
+{"deepfool_01.xml" : "over_shoot = 0.01",
+	"deepfool_02.xml" : "over_shoot = 0.02",
+	"deepfool_03.xml" : "over_shoot = 0.03"
+}

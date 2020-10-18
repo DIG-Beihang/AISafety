@@ -1,0 +1,10 @@
+{
+	"blb_01.xml" : "default",
+    "blb_02.xml" : "default",
+    "blb_03.xml" : "default",
+    "blb_04.xml" : "default",
+    "blb_05.xml" : "default",
+    "blb_06.xml" : "default",
+    "blb_07.xml" : "default",
+    "blb_08.xml" : "default"
+}

@@ -1,0 +1,8 @@
+<method type='deepfoolAttack'>
+<param title='overshoot'>
+	<overshoot>0.001</overshoot>
+</param>
+<param title='max_iter'>
+	<max_iter>10</max_iter>
+</param>
+</method>

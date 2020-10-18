@@ -1,0 +1,20 @@
+<method type='NAT'>
+<param title='num_epochs'>
+	<num_epochs>100</num_epochs>
+</param>
+<param title='adv_ratio'>
+	<adv_ratio>0.3</adv_ratio>
+</param>
+<param title='clip_eps_min'>
+	<clip_eps_min>0.0</clip_eps_min>
+</param>
+	<param title='clip_eps_max'>
+	<clip_eps_max>0.5</clip_eps_max>
+</param>
+	<param title='eps_mu'>
+	<eps_mu>0</eps_mu>
+</param>
+	<param title='eps_sigma'>
+	<eps_sigma>50</eps_sigma>
+</param>
+</method>

@@ -1,0 +1,5 @@
+<method type='llcAttack'>
+<param title='epsilon'>
+	<epsilon>0.1</epsilon>
+</param>
+</method>

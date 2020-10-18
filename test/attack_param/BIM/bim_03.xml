@@ -1,0 +1,11 @@
+<method type='bimAttack'>
+<param title='epsilon'>
+	<epsilon>0.2</epsilon>
+</param>
+<param title='eps_iter'>
+	<eps_iter>0.1</eps_iter>
+</param>
+<param title='num_steps'>
+	<num_steps>15</num_steps>
+</param>
+</method>

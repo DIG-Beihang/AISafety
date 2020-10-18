@@ -1,0 +1,11 @@
+<method type='OAT'>
+<param title='num_epochs'>
+	<num_epochs>100</num_epochs>
+</param>
+<param title='epsilon'>
+	<epsilon>0.03</epsilon>
+</param>
+	<param title='alpha'>
+	<alpha>0.5</alpha>
+</param>
+</method>

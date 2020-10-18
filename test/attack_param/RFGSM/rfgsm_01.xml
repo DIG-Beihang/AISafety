@@ -1,0 +1,8 @@
+<method type='rfgsmAttack'>
+<param title='epsilon'>
+	<epsilon>0.01</epsilon>
+</param>
+<param title='alpha'>
+	<alpha>0.5</alpha>
+</param>
+</method>

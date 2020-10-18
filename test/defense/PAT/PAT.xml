@@ -1,0 +1,8 @@
+<method type='PAT'>
+<param title='num_epochs'>
+	<num_epochs>50</num_epochs>
+</param>
+<param title='epsilon'>
+	<epsilon>0.6</epsilon>
+</param>
+</method>

@@ -1,0 +1,5 @@
+<method type="fgsmAttack">
+<param title="epsilon">
+   <epsilon>0.25</epsilon>
+</param>
+</method>

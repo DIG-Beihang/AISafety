@@ -1,0 +1,14 @@
+<method type='EAT'>
+<param title='dataset'>
+	<dataset>CIFAR10</dataset>
+</param>
+<param title='epsilon'>
+	<epsilon>0.6</epsilon>
+</param>
+	<param title='external_model_path'>
+	<external_model_path>../EvalBox/DefenseEnhancedModels/EAT/</external_model_path>
+</param>
+	<param title='train_externals'>
+	<train_externals>False</train_externals>
+</param>
+</method>

@@ -1,0 +1,17 @@
+<method type='spsaAttack'>
+<param title='spsa_iters'>
+	<spsa_iters>2</spsa_iters>
+</param>
+	<param title='spsa_samples'>
+	<spsa_samples>32</spsa_samples>
+	</param>
+	<param title='learning_rate'>
+	<learning_rate>0.01</learning_rate>
+	</param>
+	<param title='eps'>
+	<eps>0.05</eps>
+	</param>
+		<param title='nb_iter'>
+	<nb_iter>10</nb_iter>
+	</param>
+</method>

@@ -1,0 +1,26 @@
+<method type='eadAttack'>
+<param title='kappa'>
+	<kappa>0</kappa>
+</param>
+<param title='lr'>
+	<lr>0.25</lr>
+</param>
+<param title='init_const'>
+	<init_const>0.02</init_const>
+</param>
+<param title='lower_bound'>
+	<lower_bound>0.0</lower_bound>
+</param>
+<param title='upper_bound'>
+	<upper_bound>1.0</upper_bound>
+</param>
+<param title='max_iter'>
+	<max_iter>100</max_iter>
+</param>
+<param title='binary_search_steps'>
+	<binary_search_steps>4</binary_search_steps>
+</param>
+<param title='class_type_number'>
+	<class_type_number>10</class_type_number>
+</param>
+</method>

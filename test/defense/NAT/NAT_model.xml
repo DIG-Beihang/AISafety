@@ -1,0 +1,5 @@
+<method type='ANP_VGG16'>
+<param title='batch_size'>
+	<batch_size>64</batch_size>
+</param>
+</method>

@@ -1,0 +1,8 @@
+<method type='jsmAttack'>
+<param title='theta'>
+	<theta>1.0</theta>
+</param>
+<param title='gamma'>
+	<gamma>0.1</gamma>
+</param>
+</method>

@@ -1,0 +1,11 @@
+<method type='ILLCAttack'>
+<param title='epsilon'>
+	<epsilon>0.15</epsilon>
+</param>
+<param title='epsilon_iter'>
+	<epsilon_iter>0.5</epsilon_iter>
+</param>
+<param title='num_steps'>
+	<num_steps>10</num_steps>
+</param>
+</method>

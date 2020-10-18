@@ -1,0 +1,9 @@
+<method type='corruptAttack'>
+<param title='corruption_name'>
+	<corruption_name>impulse_noise</corruption_name>
+</param>
+<param title='severity'>
+	<severity>1</severity>
+</param>
+
+</method>

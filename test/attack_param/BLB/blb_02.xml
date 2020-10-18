@@ -1,0 +1,11 @@
+<method type='blbAttack'>
+<param title='init_const'>
+	<init_const>0.01</init_const>
+</param>
+<param title='max_iter'>
+	<max_iter>1000</max_iter>
+</param>
+<param title='binary_search_steps'>
+	<binary_search_steps>2</binary_search_steps>
+</param>
+</method>

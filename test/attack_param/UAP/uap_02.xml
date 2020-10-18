@@ -1,0 +1,14 @@
+<method type='UAPAttack'>
+<param title='deepfool_overshoot'>
+	<deepfool_overshoot>0.02</deepfool_overshoot>
+</param>
+<param title='deepfool_max_iter'>
+	<deepfool_max_iter>100</deepfool_max_iter>
+</param>
+<param title='epsilon'>
+	<epsilon>0.2</epsilon>
+</param>
+	<param title='dataset'>
+	<dataset>cifar10</dataset>
+</param>
+</method>

@@ -1,0 +1,8 @@
+<method type='ANP'>
+<param title='dataset'>
+	<dataset>CIFAR10</dataset>
+</param>
+<param title='epsilon'>
+	<epsilon>0.6</epsilon>
+</param>
+</method>

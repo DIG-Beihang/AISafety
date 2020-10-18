@@ -1,0 +1,9 @@
+<method type="patchImageAttack">
+<param title="patch_path">
+   <patch_path>../fusionpatch.png</patch_path>
+</param>
+<param  title="position">
+   <position>135,135</position>
+</param>
+
+</method>

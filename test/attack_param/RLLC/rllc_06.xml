@@ -1,0 +1,8 @@
+<method type='rllcAttack'>
+<param title='epsilon'>
+	<epsilon>0.35</epsilon>
+</param>
+<param title='alpha'>
+	<alpha>0.1</alpha>
+</param>
+</method>

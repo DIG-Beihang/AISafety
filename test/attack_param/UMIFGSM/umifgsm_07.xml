@@ -1,0 +1,14 @@
+<method type='umifgsmAttack'>
+<param title='epsilon'>
+	<epsilon>0.4</epsilon>
+</param>
+<param title='eps_iter'>
+	<eps_iter>0.1</eps_iter>
+</param>
+<param title='num_steps'>
+	<num_steps>15</num_steps>
+</param>
+<param title='decay_factor'>
+	<decay_factor>1.0</decay_factor>
+</param>
+</method>

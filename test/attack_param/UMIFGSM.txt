@@ -1,0 +1,9 @@
+{
+    "umifgsm_01.xml" : "ε = 0.1",
+	"umifgsm_02.xml" : "ε = 0.15",
+	"umifgsm_03.xml" : "ε = 0.2",
+	"umifgsm_04.xml" : "ε = 0.25",
+	"umifgsm_05.xml" : "ε = 0.3",
+	"umifgsm_06.xml" : "ε = 0.35",
+	"umifgsm_07.xml" : "ε = 0.4"
+}
