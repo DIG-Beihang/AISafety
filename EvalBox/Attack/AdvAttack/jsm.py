@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding=UTF-8
-'''
+"""
 @Author: Tao Hang
 @LastEditors: linna
 @Description: 
 @Date: 2019-03-29 09:19:32
 @LastEditTime: 2020-07-10 09:25:32
-'''
+"""
 import numpy as np
 import torch
 from torch.autograd import Variable
@@ -16,8 +16,8 @@ from EvalBox.Attack.AdvAttack.attack import Attack
 
 
 class JSM(Attack):
-    def __init__(self, model=None, device=None,IsTargeted=None, **kwargs):
-        '''
+    def __init__(self, model=None, device=None, IsTargeted=None, **kwargs):
+        """
         @description: Jacobian-based Saliency Map Attack
         @param {
             model:
@@ -25,31 +25,31 @@ class JSM(Attack):
             kwargs:
         } 
         @return: None
-        '''
-        super(JSM, self).__init__(model, device,IsTargeted)
+        """
+        super(JSM, self).__init__(model, device, IsTargeted)
 
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        '''
+        """
         @description: 
         @param {
             theta:
             gamma:
         } 
         @return: None
-        '''
-        self.theta = float(kwargs.get('theta', 1.0))
-        self.gamma = float(kwargs.get('gamma', 0.001))
+        """
+        self.theta = float(kwargs.get("theta", 1.0))
+        self.gamma = float(kwargs.get("gamma", 0.001))
 
     def _compute_jacobian(self, input):
-        '''
+        """
         @description: 
         @param {
             input: 1xCxHxW
         } 
         @return: jacobian matrix (10 x [HxW])
-        '''
+        """
         device = self.device
         self.model.eval()
 
@@ -68,9 +68,10 @@ class JSM(Attack):
 
         return jacobian.to(device)
 
-    def _saliency_map(self, jacobian, target_index, increasing, search_space,
-                      nb_features):
-        '''
+    def _saliency_map(
+        self, jacobian, target_index, increasing, search_space, nb_features
+    ):
+        """
         @description: 
         @param {
             jacobian:
@@ -80,14 +81,17 @@ class JSM(Attack):
             nb_feature:
         } 
         @return: (p, q) a pair of pixel 
-        '''
+        """
         device = self.device
         domain = torch.eq(search_space, 1).float()
 
         all_sum = torch.sum(jacobian, dim=0, keepdim=True)
         target_grad = jacobian[
-            target_index]  # The forward derivative of the target class
-        others_grad = all_sum - target_grad  # The sum of forward derivative of other classes
+            target_index
+        ]  # The forward derivative of the target class
+        others_grad = (
+            all_sum - target_grad
+        )  # The sum of forward derivative of other classes
 
         # this list blanks out those that are not in the search domain
         if increasing:
@@ -100,13 +104,12 @@ class JSM(Attack):
         target_tmp = target_grad.clone()
         target_tmp -= increase_coef * torch.max(torch.abs(target_grad))
         alpha = target_tmp.view(-1, 1, nb_features) + target_tmp.view(
-            -1, nb_features,
-            1)  # PyTorch will automatically extend the dimensions
+            -1, nb_features, 1
+        )  # PyTorch will automatically extend the dimensions
         # calculate sum of other forward derivative of any 2 features.
         others_tmp = others_grad.clone()
         others_tmp += increase_coef * torch.max(torch.abs(others_grad))
-        beta = others_tmp.view(-1, 1, nb_features) + others_tmp.view(
-            -1, nb_features, 1)
+        beta = others_tmp.view(-1, 1, nb_features) + others_tmp.view(-1, nb_features, 1)
 
         # zero out the situation where a feature sums with itself
         tmp = np.ones((nb_features, nb_features), int)
@@ -124,30 +127,29 @@ class JSM(Attack):
         # apply the mask to the saliency map
         mask = torch.mul(torch.mul(mask1, mask2), zero_diagonal.view_as(mask1))
         # do the multiplication according to formula 10 in the paper
-        saliency_map = torch.mul(
-            torch.mul(alpha, torch.abs(beta)), mask.float())
+        saliency_map = torch.mul(torch.mul(alpha, torch.abs(beta)), mask.float())
         # get the most significant two pixels
         max_value, max_idx = torch.max(
-            saliency_map.view(-1, nb_features * nb_features), dim=1)
+            saliency_map.view(-1, nb_features * nb_features), dim=1
+        )
         p = max_idx // nb_features
         q = max_idx % nb_features
         return p, q
 
-    def _generate_one(self, x, y,targeted=False):
-        '''
+    def _generate_one(self, x, y, targeted=False):
+        """
         @description: 
         @param {
             x: [1xCxHxW]
             y: [1xCxHxW]
         } 
         @return: adv_x
-        '''
+        """
         device = self.device
         copy_x = x.numpy().copy()
         copy_y = y.numpy().copy()
 
-        var_x = Variable(
-            torch.from_numpy(copy_x).to(device), requires_grad=True)
+        var_x = Variable(torch.from_numpy(copy_x).to(device), requires_grad=True)
         var_y = Variable(torch.LongTensor(copy_y).to(device))
 
         if self.theta > 0:
@@ -171,13 +173,17 @@ class JSM(Attack):
         iter = 0
 
         if targeted:
-            while (iter < max_iters) and (current[0] != copy_y[0]) and (
-                    search_domain.sum() != 0):
+            while (
+                (iter < max_iters)
+                and (current[0] != copy_y[0])
+                and (search_domain.sum() != 0)
+            ):
                 # calculate Jacobian matrix of forward derivative
                 jacobian = self._compute_jacobian(input=var_x)
                 # get the saliency map and calculate the two pixels that have the greatest influence
-                p1, p2 = self._saliency_map(jacobian, var_y, increasing,
-                                            search_domain, num_features)
+                p1, p2 = self._saliency_map(
+                    jacobian, var_y, increasing, search_domain, num_features
+                )
                 # apply modifications
                 var_x_flatten = var_x.view(-1, num_features)
                 var_x_flatten[0, p1] += self.theta
@@ -194,13 +200,17 @@ class JSM(Attack):
                 iter += 1
 
         else:
-             while (iter < max_iters) and (current[0] == copy_y[0]) and (
-                    search_domain.sum() != 0):
+            while (
+                (iter < max_iters)
+                and (current[0] == copy_y[0])
+                and (search_domain.sum() != 0)
+            ):
                 # calculate Jacobian matrix of forward derivative
                 jacobian = self._compute_jacobian(input=var_x)
                 # get the saliency map and calculate the two pixels that have the greatest influence
-                p1, p2 = self._saliency_map(jacobian, var_y, increasing,
-                                            search_domain, num_features)
+                p1, p2 = self._saliency_map(
+                    jacobian, var_y, increasing, search_domain, num_features
+                )
                 # apply modifications
                 var_x_flatten = var_x.view(-1, num_features)
                 var_x_flatten[0, p1] += self.theta
@@ -219,23 +229,23 @@ class JSM(Attack):
         return adv_x
 
     def generate(self, xs=None, ys=None):
-        '''
+        """
         @description: 
         @param {
             xs:
             ys:
         } 
         @return: adv_xs
-        '''
-        #因為容量問題，目前默認在CPU下運行
+        """
+        # 因為容量問題，目前默認在CPU下運行
         # self.device='cpu'
         # self.model=self.model.to(self.device)
         device = self.device
-        targeted=self.IsTargeted
+        targeted = self.IsTargeted
         adv_xs = []
         for i in range(len(xs)):
-            #print('\tprocessing {}'.format(i + 1))
-            adv_x = self._generate_one(xs[i:i + 1], ys[i:i + 1],targeted)
+            # print('\tprocessing {}'.format(i + 1))
+            adv_x = self._generate_one(xs[i : i + 1], ys[i : i + 1], targeted)
             adv_xs.append(adv_x)
 
         adv_xs = torch.cat(adv_xs, 0)

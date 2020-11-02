@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding=UTF-8
-'''
+"""
 @Author: linna
 @LastEditors: linna
 @Description: 
 @Date: 2019-09-0313:38:17
 @LastEditTime: 2020-09-23 13:38:22
-'''
+"""
 from .attack import Attack
 from .fgsm import FGSM
 from .rfgsm import RFGSM

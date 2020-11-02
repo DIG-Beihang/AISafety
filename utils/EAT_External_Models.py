@@ -7,7 +7,7 @@
 # @File    : EAT_External_Models.py
 # **************************************
 
-'''
+"""
 The cifar10 model frameworks are downloaded from
 https://github.com/junyuseu/pytorch-cifar-models/blob/master/models/resnet_cifar.py
 and
@@ -18,7 +18,7 @@ Reference:
 [2] K. He, X. Zhang, S. Ren, and J. Sun. Identity mappings in deep residual networks. In ECCV, 2016.
 [3] H. Gao, Z. Liu, L. Maaten and K. Weinberger. Densely connected convolutional networks. In CVPR, 2017.
 [4] Y. Lecun, L. Bottou, Y. Bengio and P. Haffner. Gradient-Based Learning Applied to Document Recognition. In IEEE, 1998.
-'''
+"""
 
 import math
 
@@ -38,14 +38,14 @@ class MNIST_A(BasicModule):
             nn.ReLU(),
             nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.conv64 = nn.Sequential(
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3),
             nn.ReLU(),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.fc1 = nn.Linear(4 * 4 * 64, 200)
         self.dropout = nn.Dropout2d(p=0.5)
@@ -68,16 +68,21 @@ class MNIST_B(BasicModule):
         super(MNIST_B, self).__init__()
 
         self.conv64 = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=64, kernel_size=8, stride=(2, 2), padding=(17, 17)),
-            nn.ReLU()
+            nn.Conv2d(
+                in_channels=1,
+                out_channels=64,
+                kernel_size=8,
+                stride=(2, 2),
+                padding=(17, 17),
+            ),
+            nn.ReLU(),
         )
         self.conv128_1 = nn.Sequential(
             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=6, stride=(2, 2)),
-            nn.ReLU()
+            nn.ReLU(),
         )
         self.conv128_2 = nn.Sequential(
-            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=5),
-            nn.ReLU()
+            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=5), nn.ReLU()
         )
         self.fc = nn.Linear(8 * 8 * 128, 10)
         self.dropout_1 = nn.Dropout2d(p=0.2)
@@ -99,12 +104,10 @@ class MNIST_C(BasicModule):
         super(MNIST_C, self).__init__()
 
         self.conv128 = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=128, kernel_size=3),
-            nn.ReLU()
+            nn.Conv2d(in_channels=1, out_channels=128, kernel_size=3), nn.ReLU()
         )
         self.conv64 = nn.Sequential(
-            nn.Conv2d(in_channels=128, out_channels=64, kernel_size=3),
-            nn.ReLU()
+            nn.Conv2d(in_channels=128, out_channels=64, kernel_size=3), nn.ReLU()
         )
         self.fc1 = nn.Linear(24 * 24 * 64, 128)
         self.fc2 = nn.Linear(128, 10)
@@ -147,15 +150,12 @@ class MNIST_D(BasicModule):
 
 # below is the model framework for cifar10
 
+
 def conv3x3(in_planes, out_planes, stride=1):
     # 3x3 convolution with padding
     return nn.Conv2d(
-        in_planes,
-        out_planes,
-        kernel_size=3,
-        stride=stride,
-        padding=1,
-        bias=False)
+        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False
+    )
 
 
 class BasicBlock(nn.Module):
@@ -191,7 +191,7 @@ class BasicBlock(nn.Module):
 
 
 class CIFAR10_A(BasicModule):
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
         super(CIFAR10_A, self).__init__()
         self.inplanes = 16
         self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
@@ -206,20 +206,28 @@ class CIFAR10_A(BasicModule):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
+                m.weight.data.normal_(0, math.sqrt(2.0 / n))
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        self.batch_size = int(kwargs.get('batch_size', 128))
+        self.batch_size = int(kwargs.get("batch_size", 128))
+
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(planes * block.expansion))
+                nn.Conv2d(
+                    self.inplanes,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
+                ),
+                nn.BatchNorm2d(planes * block.expansion),
+            )
 
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample))
@@ -247,13 +255,16 @@ class CIFAR10_A(BasicModule):
 
 # DenseNet
 
+
 class Bottleneck(nn.Module):
     def __init__(self, in_planes, growth_rate):
         super(Bottleneck, self).__init__()
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.conv1 = nn.Conv2d(in_planes, 4 * growth_rate, kernel_size=1, bias=False)
         self.bn2 = nn.BatchNorm2d(4 * growth_rate)
-        self.conv2 = nn.Conv2d(4 * growth_rate, growth_rate, kernel_size=3, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(
+            4 * growth_rate, growth_rate, kernel_size=3, padding=1, bias=False
+        )
 
     def forward(self, x):
         out = self.conv1(F.relu(self.bn1(x)))
@@ -276,12 +287,22 @@ class Transition(nn.Module):
 
 class CIFAR10_B(BasicModule):
     # DenseNet121
-    def __init__(self, block=Bottleneck, nblocks=[6, 12, 24, 16], growth_rate=32, reduction=0.5, num_classes=10,**kwargs):
+    def __init__(
+        self,
+        block=Bottleneck,
+        nblocks=[6, 12, 24, 16],
+        growth_rate=32,
+        reduction=0.5,
+        num_classes=10,
+        **kwargs
+    ):
         super(CIFAR10_B, self).__init__()
         self.growth_rate = growth_rate
 
         num_planes = 2 * growth_rate
-        self.conv1 = nn.Conv2d(3, num_planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(
+            3, num_planes, kernel_size=3, stride=1, padding=1, bias=False
+        )
 
         self.dense1 = self._make_dense_layers(block, num_planes, nblocks[0])
         num_planes += nblocks[0] * growth_rate
@@ -309,7 +330,8 @@ class CIFAR10_B(BasicModule):
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        self.batch_size = int(kwargs.get('batch_size', 128))
+        self.batch_size = int(kwargs.get("batch_size", 128))
+
     def _make_dense_layers(self, block, in_planes, nblock):
         layers = []
         for i in range(nblock):
@@ -318,13 +340,13 @@ class CIFAR10_B(BasicModule):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = self.conv1(x)  #(64,32,32)
-        out = self.trans1(self.dense1(out))  #(128,16,16)
-        out = self.trans2(self.dense2(out)) #(256,8,8)
-        out = self.trans3(self.dense3(out))#(448,4,4)
-        out = self.dense4(out)              #(960,4,4)
-        out = F.avg_pool2d(F.relu(self.bn(out)), 4) #(b,960,1,1)
-        out = out.view(out.size(0), -1) #(b,960)
+        out = self.conv1(x)  # (64,32,32)
+        out = self.trans1(self.dense1(out))  # (128,16,16)
+        out = self.trans2(self.dense2(out))  # (256,8,8)
+        out = self.trans3(self.dense3(out))  # (448,4,4)
+        out = self.dense4(out)  # (960,4,4)
+        out = F.avg_pool2d(F.relu(self.bn(out)), 4)  # (b,960,1,1)
+        out = out.view(out.size(0), -1)  # (b,960)
         out = self.linear(out)
         return out
 
@@ -338,14 +360,14 @@ class CIFAR10_C(BasicModule):
             nn.ReLU(),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.conv128 = nn.Sequential(
             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3),
             nn.ReLU(),
             nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.fc1 = nn.Linear(5 * 5 * 128, 256)
         self.dropout = nn.Dropout2d(p=0.5)
@@ -354,7 +376,8 @@ class CIFAR10_C(BasicModule):
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        self.batch_size = int(kwargs.get('batch_size', 128))
+        self.batch_size = int(kwargs.get("batch_size", 128))
+
     def forward(self, x):
         out = self.conv64(x)
         out = self.conv128(out)
@@ -365,7 +388,9 @@ class CIFAR10_C(BasicModule):
         out = self.fc3(out)
         return out
 
-#LeNet
+
+# LeNet
+
 
 class CIFAR10_D(BasicModule):
     def __init__(self, **kwargs):
@@ -374,12 +399,12 @@ class CIFAR10_D(BasicModule):
         self.conv6 = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=6, kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.conv16 = nn.Sequential(
             nn.Conv2d(in_channels=6, out_channels=16, kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.fc1 = nn.Linear(5 * 5 * 16, 120)
         self.fc2 = nn.Linear(120, 84)
@@ -389,7 +414,8 @@ class CIFAR10_D(BasicModule):
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        self.batch_size = int(kwargs.get('batch_size', 128))
+        self.batch_size = int(kwargs.get("batch_size", 128))
+
     def forward(self, x):
         out = self.conv6(x)
         out = self.conv16(out)
@@ -402,7 +428,7 @@ class CIFAR10_D(BasicModule):
 
 
 class ImageNet_A(BasicModule):
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
         super(ImageNet_A, self).__init__()
         self.inplanes = 64
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
@@ -419,7 +445,7 @@ class ImageNet_A(BasicModule):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
+                m.weight.data.normal_(0, math.sqrt(2.0 / n))
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
@@ -427,14 +453,21 @@ class ImageNet_A(BasicModule):
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        self.batch_size = int(kwargs.get('batch_size', 128))
+        self.batch_size = int(kwargs.get("batch_size", 128))
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(planes * block.expansion))
+                nn.Conv2d(
+                    self.inplanes,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
+                ),
+                nn.BatchNorm2d(planes * block.expansion),
+            )
 
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample))
@@ -462,15 +495,24 @@ class ImageNet_A(BasicModule):
         return x
 
 
-
 class ImageNet_B(BasicModule):
     # DenseNet121
-    def __init__(self, block=Bottleneck, nblocks=[6, 12, 24, 16], growth_rate=32, reduction=0.5, num_classes=1000, **kwargs):
+    def __init__(
+        self,
+        block=Bottleneck,
+        nblocks=[6, 12, 24, 16],
+        growth_rate=32,
+        reduction=0.5,
+        num_classes=1000,
+        **kwargs
+    ):
         super(ImageNet_B, self).__init__()
         self.growth_rate = growth_rate
 
         num_planes = 2 * growth_rate
-        self.conv1 = nn.Conv2d(3, num_planes, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(
+            3, num_planes, kernel_size=7, stride=2, padding=3, bias=False
+        )
         self.bn1 = nn.BatchNorm2d(num_planes)
         self.Relu = nn.ReLU(inplace=True)
         self.MPool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -501,7 +543,8 @@ class ImageNet_B(BasicModule):
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        self.batch_size = int(kwargs.get('batch_size', 128))
+        self.batch_size = int(kwargs.get("batch_size", 128))
+
     def _make_dense_layers(self, block, in_planes, nblock):
         layers = []
         for i in range(nblock):
@@ -530,35 +573,35 @@ class ImageNet_C(BasicModule):
             nn.ReLU(),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2) #14   110
+            nn.MaxPool2d(kernel_size=2),  # 14   110
         )
         self.conv128 = nn.Sequential(
             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3),
             nn.ReLU(),
             nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2) #5 53
+            nn.MaxPool2d(kernel_size=2),  # 5 53
         )
         self.conv256 = nn.Sequential(
             nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3),
             nn.ReLU(),
             nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)  # 24
+            nn.MaxPool2d(kernel_size=2),  # 24
         )
         self.conv512 = nn.Sequential(
             nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3),
             nn.ReLU(),
             nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)  # 10
+            nn.MaxPool2d(kernel_size=2),  # 10
         )
         self.conv512_2 = nn.Sequential(
             nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3),
             nn.ReLU(),
             nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)  # 3
+            nn.MaxPool2d(kernel_size=2),  # 3
         )
         self.fc1 = nn.Linear(3 * 3 * 512, 256)
         self.dropout = nn.Dropout2d(p=0.5)
@@ -567,7 +610,8 @@ class ImageNet_C(BasicModule):
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        self.batch_size = int(kwargs.get('batch_size', 128))
+        self.batch_size = int(kwargs.get("batch_size", 128))
+
     def forward(self, x):
         out = self.conv64(x)
         out = self.conv128(out)
@@ -581,7 +625,9 @@ class ImageNet_C(BasicModule):
         out = self.fc3(out)
         return out
 
-#LeNet
+
+# LeNet
+
 
 class ImageNet_D(BasicModule):
     def __init__(self, **kwargs):
@@ -590,27 +636,27 @@ class ImageNet_D(BasicModule):
         self.conv6 = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=6, kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.conv16 = nn.Sequential(
             nn.Conv2d(in_channels=6, out_channels=16, kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.conv26 = nn.Sequential(
             nn.Conv2d(in_channels=16, out_channels=26, kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.conv36 = nn.Sequential(
             nn.Conv2d(in_channels=26, out_channels=36, kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.conv46 = nn.Sequential(
             nn.Conv2d(in_channels=36, out_channels=46, kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2)
+            nn.MaxPool2d(kernel_size=2),
         )
         self.fc1 = nn.Linear(3 * 3 * 46, 120)
         self.fc2 = nn.Linear(120, 84)
@@ -620,7 +666,8 @@ class ImageNet_D(BasicModule):
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        self.batch_size = int(kwargs.get('batch_size', 128))
+        self.batch_size = int(kwargs.get("batch_size", 128))
+
     def forward(self, x):
         out = self.conv6(x)
         out = self.conv16(out)
@@ -633,4 +680,3 @@ class ImageNet_D(BasicModule):
         # out = self.dropout(out)
         out = self.fc3(out)
         return out
-

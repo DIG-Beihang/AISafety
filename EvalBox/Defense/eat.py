@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding=UTF-8
-'''
+"""
 @Author:
 @LastEditors:
 @Description: 
 @Date: 2019-6-17 10:26:12
 @LastEditTime: 2019-6-18
-'''
+"""
 import numpy as np
 import os
 import torch
@@ -18,15 +18,11 @@ from utils.Defense_utils import adjust_learning_rate
 from EvalBox.Defense.defense import Defense
 
 
-
 class EAT(Defense):
-    def __init__(self,
-                 model=None,
-                 device=None,
-                 optimizer=None,
-                 scheduler=None,
-                 **kwargs):
-        '''
+    def __init__(
+        self, model=None, device=None, optimizer=None, scheduler=None, **kwargs
+    ):
+        """
         @description: Ensemble adversarial training (EAT)
         @param {
             model:
@@ -36,7 +32,7 @@ class EAT(Defense):
             kwargs:
         } 
         @return: None
-        '''
+        """
         super().__init__(model, device)
 
         self.criterion = torch.nn.CrossEntropyLoss()
@@ -44,7 +40,7 @@ class EAT(Defense):
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        '''
+        """
         @description:
         @param {
             num_epochs:
@@ -52,15 +48,16 @@ class EAT(Defense):
             alpha:
         }
         @return: None
-        '''
-        self.dataset  = str(kwargs.get('dataset'))
-        self.num_epochs =int( kwargs.get('num_epochs', 100))
-        self.epsilon = float(kwargs.get('epsilon', 0.3))
-        self.alpha = float(kwargs.get('alpha', 0.05))
-        self.train_externals = kwargs.get('train_externals',True)
-        self.learn_rate = float(kwargs.get('learn_rate',0.001))
-        self.external_model_path=str(kwargs.get('external_model_path', '../EvalBox/DefenseEnhancedModels/EAT/'))
-
+        """
+        self.dataset = str(kwargs.get("dataset"))
+        self.num_epochs = int(kwargs.get("num_epochs", 100))
+        self.epsilon = float(kwargs.get("epsilon", 0.3))
+        self.alpha = float(kwargs.get("alpha", 0.05))
+        self.train_externals = kwargs.get("train_externals", True)
+        self.learn_rate = float(kwargs.get("learn_rate", 0.001))
+        self.external_model_path = str(
+            kwargs.get("external_model_path", "../EvalBox/DefenseEnhancedModels/EAT/")
+        )
 
     def train_one_epoch(self, model, train_loader, optimizer, epoch, device):
         """
@@ -87,10 +84,20 @@ class EAT(Defense):
             loss.backward()
             optimizer.step()
 
-            print('\rTrain Epoch{:>3}: [batch:{:>4}/{:>4}({:>3.0f}%)]  \tLoss: {:.4f} ===> '. \
-                  format(epoch, index, len(train_loader), index / len(train_loader) * 100.0, loss.item()), end=' ')
+            print(
+                "\rTrain Epoch{:>3}: [batch:{:>4}/{:>4}({:>3.0f}%)]  \tLoss: {:.4f} ===> ".format(
+                    epoch,
+                    index,
+                    len(train_loader),
+                    index / len(train_loader) * 100.0,
+                    loss.item(),
+                ),
+                end=" ",
+            )
 
-    def train_external_model_group(self, train_loader=None, validation_loader=None, model_dir_path=None):
+    def train_external_model_group(
+        self, train_loader=None, validation_loader=None, model_dir_path=None
+    ):
         """
 
         :param train_loader:
@@ -111,40 +118,56 @@ class EAT(Defense):
 
             # prepare the optimizer for CIFAR10
             if i == 3:
-                optimizer_external = optim.SGD(model_group[i].parameters(), lr=0.001, momentum=0.9,
-                                                   weight_decay=1e-6)
+                optimizer_external = optim.SGD(
+                    model_group[i].parameters(),
+                    lr=0.001,
+                    momentum=0.9,
+                    weight_decay=1e-6,
+                )
             else:
-                optimizer_external = optim.Adam(model_group[i].parameters(), lr=self.learn_rate)
+                optimizer_external = optim.Adam(
+                    model_group[i].parameters(), lr=self.learn_rate
+                )
 
+            # scheduler_external = optim.lr_scheduler.StepLR(optimizer_external, 20, gamma=0.1)
 
-            #scheduler_external = optim.lr_scheduler.StepLR(optimizer_external, 20, gamma=0.1)
-
-            print('\nwe are training the {}-th static external model ......'.format(i))
+            print("\nwe are training the {}-th static external model ......".format(i))
             best_val_acc = None
             for index_epoch in range(self.num_epochs):
 
+                # scheduler_external.step()
+                # print("external model learn rate is: ", scheduler_external.get_lr()[0])
 
-                #scheduler_external.step()
-                #print("external model learn rate is: ", scheduler_external.get_lr()[0])
-
-                self.train_one_epoch(model=model_group[i], train_loader=train_loader, optimizer=optimizer_external,
-                                epoch=index_epoch, device=self.device)
-                val_acc = self.valid(model=model_group[i], valid_loader=validation_loader)
+                self.train_one_epoch(
+                    model=model_group[i],
+                    train_loader=train_loader,
+                    optimizer=optimizer_external,
+                    epoch=index_epoch,
+                    device=self.device,
+                )
+                val_acc = self.valid(
+                    model=model_group[i], valid_loader=validation_loader
+                )
 
                 adjust_learning_rate(epoch=index_epoch, optimizer=optimizer_external)
-                #print(model_dir_path)
+                # print(model_dir_path)
                 assert os.path.exists(model_dir_path)
-                defense_external_saver = os.path.join(model_dir_path,"{}_EAT_{}.pt".format(self.dataset,str(i)))
+                defense_external_saver = os.path.join(
+                    model_dir_path, "{}_EAT_{}.pt".format(self.dataset, str(i))
+                )
                 if not best_val_acc or round(val_acc, 4) >= round(best_val_acc, 4):
                     if best_val_acc is not None:
                         os.remove(defense_external_saver)
                     best_val_acc = val_acc
                     model_group[i].save(name=defense_external_saver)
                 else:
-                    print('Train Epoch {:>3}: validation dataset accuracy did not improve from {:.4f}\n'.format(
-                        index_epoch, best_val_acc))
+                    print(
+                        "Train Epoch {:>3}: validation dataset accuracy did not improve from {:.4f}\n".format(
+                            index_epoch, best_val_acc
+                        )
+                    )
 
-    def load_external_model_group(self,model_dir=None):
+    def load_external_model_group(self, model_dir=None):
         self.return_ = """"
         :param model_dir:
         :param test_loader:
@@ -152,8 +175,8 @@ class EAT(Defense):
         """
         print("\n!!! Loading static external models ...")
         # Set up 4 static external models
-        #print(self.dataset)
-        model_group=None
+        # print(self.dataset)
+        model_group = None
         if self.dataset == "CIFAR10":
             model_group = [CIFAR10_A(), CIFAR10_B(), CIFAR10_C(), CIFAR10_D()]
         elif self.dataset == "ImageNet":
@@ -162,9 +185,11 @@ class EAT(Defense):
         model_group = [model.to(self.device) for model in model_group]
 
         for i in range(len(model_group)):
-            print('loading the {}-th static external model'.format(i))
-            model_path = '{}/{}_EAT_{}.pt'.format(model_dir,self.dataset, str(i))
-            assert os.path.exists(model_path), "please train the external model first!!!"
+            print("loading the {}-th static external model".format(i))
+            model_path = "{}/{}_EAT_{}.pt".format(model_dir, self.dataset, str(i))
+            assert os.path.exists(
+                model_path
+            ), "please train the external model first!!!"
             model_group[i].load(path=model_path, device=self.device)
 
         return model_group
@@ -180,15 +205,19 @@ class EAT(Defense):
         attack_model.eval()
 
         with torch.no_grad():
-            random_sign = torch.sign(torch.randn(*natural_images.size())).to(self.device)
-            new_images = torch.clamp(natural_images + self.alpha * random_sign, min=0.0, max=1.0)
+            random_sign = torch.sign(torch.randn(*natural_images.size())).to(
+                self.device
+            )
+            new_images = torch.clamp(
+                natural_images + self.alpha * random_sign, min=0.0, max=1.0
+            )
 
         new_images.requires_grad = True
 
         logits_attack = attack_model(new_images)
         # To avoid label leaking, we use the model's output instead of the true labels
         labels_attack = torch.max(logits_attack, dim=1)[1]
-        loss_attack  = self.criterion(logits_attack, labels_attack)
+        loss_attack = self.criterion(logits_attack, labels_attack)
         gradient = torch.autograd.grad(loss_attack, new_images)[0]
 
         new_images.requires_grad = False
@@ -199,15 +228,15 @@ class EAT(Defense):
             xs_adv = torch.clamp(xs_adv, min=0.0, max=1.0)
         return xs_adv
 
-    def valid(self, model=None,valid_loader=None):
-        '''
+    def valid(self, model=None, valid_loader=None):
+        """
         @description:
         @param {
             valid_loader:
             epoch:
         }
         @return: val_acc
-        '''
+        """
         device = self.device
         model.to(device).eval()
 
@@ -226,14 +255,14 @@ class EAT(Defense):
         return val_acc
 
     def train(self, pre_trained_models, train_loader=None, epoch=None):
-        '''
+        """
         @description:
         @param {
             train_loader:
             epoch:
         }
         @return: None
-        '''
+        """
         device = self.device
         self.model.to(device)
 
@@ -249,7 +278,9 @@ class EAT(Defense):
             else:
                 attacking_model = pre_trained_models[idx - 1]
 
-            adv_images = self.random_fgsm_generation(model=attacking_model, natural_images=eat_images)
+            adv_images = self.random_fgsm_generation(
+                model=attacking_model, natural_images=eat_images
+            )
 
             self.model.train()
 
@@ -266,44 +297,56 @@ class EAT(Defense):
             self.optimizer.step()
 
             print(
-                '\rTrain Epoch {:>2}: [batch:{:>4}/{:>4}]  \tloss_eat={:.4f}, loss_adv={:.4f}, total_loss={:.4f} ===> '
-                    .format(epoch, index, len(train_loader), loss_eat.item(),
-                            loss_adv.item(), loss.item()),
-                end=' ')
+                "\rTrain Epoch {:>2}: [batch:{:>4}/{:>4}]  \tloss_eat={:.4f}, loss_adv={:.4f}, total_loss={:.4f} ===> ".format(
+                    epoch,
+                    index,
+                    len(train_loader),
+                    loss_eat.item(),
+                    loss_adv.item(),
+                    loss.item(),
+                ),
+                end=" ",
+            )
 
-    def generate(self, train_loader=None, valid_loader=None, defense_enhanced_saver=None):
-        '''
+    def generate(
+        self, train_loader=None, valid_loader=None, defense_enhanced_saver=None
+    ):
+        """
         @description:
         @param {
             train_loader:
             valid_loader:
         }
         @return: best_model_weights, best_acc
-        '''
+        """
         dir_path = os.path.dirname(defense_enhanced_saver)
         if not os.path.exists(dir_path):
             os.mkdir(dir_path)
-        #print(self.train_externals)
+        # print(self.train_externals)
         if self.train_externals:
-            print('\nStart to train the external models ......\n')
-            self.train_external_model_group(train_loader=train_loader, validation_loader=valid_loader, model_dir_path=self.external_model_path)
+            print("\nStart to train the external models ......\n")
+            self.train_external_model_group(
+                train_loader=train_loader,
+                validation_loader=valid_loader,
+                model_dir_path=self.external_model_path,
+            )
 
             # load the external models
-        pre_train_models = self.load_external_model_group(model_dir=self.external_model_path)
-
+        pre_train_models = self.load_external_model_group(
+            model_dir=self.external_model_path
+        )
 
         best_val_acc = None
         best_model_weights = self.model.state_dict()
 
         for epoch in range(self.num_epochs):
-            #if not self.scheduler:
-            #self.scheduler.step()
+            # if not self.scheduler:
+            # self.scheduler.step()
 
             self.train(pre_train_models, train_loader, epoch)
             val_acc = self.valid(self.model, valid_loader)
 
             adjust_learning_rate(epoch=epoch, optimizer=self.optimizer)
-
 
             if not best_val_acc or round(val_acc, 4) >= round(best_val_acc, 4):
                 if best_val_acc is not None:
@@ -312,12 +355,15 @@ class EAT(Defense):
                 best_model_weights = self.model.state_dict()
                 torch.save(self.model.state_dict(), defense_enhanced_saver)
             else:
-                print('Train Epoch{:>3}: validation dataset accuracy did not improve from {:.4f}\n'.format(epoch,
-                                                                                                           best_val_acc))
+                print(
+                    "Train Epoch{:>3}: validation dataset accuracy did not improve from {:.4f}\n".format(
+                        epoch, best_val_acc
+                    )
+                )
 
             # if round(val_acc, 4) >= round(best_acc, 4):
             #     best_acc = val_acc
             #     best_model_weights = self.model.state_dict()
 
-        print('Best val Acc: {:.4f}'.format(best_val_acc))
+        print("Best val Acc: {:.4f}".format(best_val_acc))
         return best_model_weights, best_val_acc

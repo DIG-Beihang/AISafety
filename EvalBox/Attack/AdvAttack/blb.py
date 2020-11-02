@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding=UTF-8
-'''
+"""
 @Author: Tao Hang
 @LastEditors: Tao Hang
 @Description: 
 @Date: 2019-03-29 10:41:16
 @LastEditTime: 2019-04-15 09:25:43
-'''
+"""
 import numpy as np
 import torch
 from torch.autograd import Variable
@@ -16,7 +16,7 @@ from EvalBox.Attack.AdvAttack.attack import Attack
 
 class BLB(Attack):
     def __init__(self, model=None, device=None, IsTargeted=None, **kwargs):
-        '''
+        """
         @description: Box-constrained L-BFGS attack
         @param {
             model:
@@ -24,15 +24,15 @@ class BLB(Attack):
             kwargs:
         } 
         @return: None
-        '''
-        super(BLB, self).__init__(model, device,IsTargeted)
+        """
+        super(BLB, self).__init__(model, device, IsTargeted)
 
-        self.criterion = torch.nn.CrossEntropyLoss(reduction='none')
+        self.criterion = torch.nn.CrossEntropyLoss(reduction="none")
 
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        '''
+        """
         @description: 
         @param {
             init_const:
@@ -40,23 +40,23 @@ class BLB(Attack):
             max_iter:
         } 
         @return: None
-        '''
+        """
         #
-        self.init_const = float(kwargs.get('init_const', 0.01))
+        self.init_const = float(kwargs.get("init_const", 0.01))
         #
-        self.max_iter = int(kwargs.get('max_iter', 1000))
+        self.max_iter = int(kwargs.get("max_iter", 1000))
         #
-        self.binary_search_steps = int(kwargs.get('binary_search_steps', 5))
+        self.binary_search_steps = int(kwargs.get("binary_search_steps", 5))
 
     def generate(self, xs=None, ys=None):
-        '''
+        """
         @description: 
         @param {
             xs:
             ys:
         } 
         @return: adv_xs
-        '''
+        """
         device = self.device
         targeted = self.IsTargeted
         batch_size = xs.shape[0]
@@ -64,7 +64,8 @@ class BLB(Attack):
         copy_ys = np.copy(ys.numpy())
 
         var_xs = Variable(
-            torch.from_numpy(copy_xs).float().to(device), requires_grad=True)
+            torch.from_numpy(copy_xs).float().to(device), requires_grad=True
+        )
         var_ys = Variable(torch.LongTensor(copy_ys).to(device))
 
         const_origin = np.ones(shape=batch_size, dtype=float) * self.init_const
@@ -74,7 +75,6 @@ class BLB(Attack):
         best_l2 = [1e10] * batch_size
         best_perturbation = np.zeros(var_xs.shape)
         current_prediction_class = [-1] * batch_size
-
 
         def attack_achieved(pre_softmax, target_class):
             targeted = self.IsTargeted
@@ -102,7 +102,9 @@ class BLB(Attack):
                 if targeted:
                     constraint_loss = self.criterion(prediction, var_ys)
                 loss_f = var_const * constraint_loss
-                loss = l2dist.sum() + loss_f.sum()  # minimize c|r| + loss_f(x+r,l), l is the target label, r is the perturbation
+                loss = (
+                    l2dist.sum() + loss_f.sum()
+                )  # minimize c|r| + loss_f(x+r,l), l is the target label, r is the perturbation
                 optimizer.zero_grad()
                 loss.backward(retain_graph=True)
                 return loss
@@ -115,7 +117,12 @@ class BLB(Attack):
 
             # the following is analogy to CW2 attack
             for i, (dist, score, perturbation) in enumerate(
-                    zip(l2dist.data.cpu().numpy(), prediction.data.cpu().numpy(), perturbed_images.data.cpu().numpy())):
+                zip(
+                    l2dist.data.cpu().numpy(),
+                    prediction.data.cpu().numpy(),
+                    perturbed_images.data.cpu().numpy(),
+                )
+            ):
                 if dist < best_l2[i] and attack_achieved(score, copy_ys[i]):
                     best_l2[i] = dist
                     current_prediction_class[i] = np.argmax(score)
@@ -123,17 +130,20 @@ class BLB(Attack):
 
             # update the best constant c for each sample in the batch
             for i in range(batch_size):
-                if current_prediction_class[i] == copy_ys[i] and current_prediction_class[i] != -1:
+                if (
+                    current_prediction_class[i] == copy_ys[i]
+                    and current_prediction_class[i] != -1
+                ):
                     c_upper_bound[i] = min(c_upper_bound[i], const_origin[i])
                     if c_upper_bound[i] < 1e10:
-                        const_origin[i] = (c_lower_bound[i] + c_upper_bound[i]) / 2.
+                        const_origin[i] = (c_lower_bound[i] + c_upper_bound[i]) / 2.0
                 else:
                     c_lower_bound[i] = max(c_lower_bound[i], const_origin[i])
                     if c_upper_bound[i] < 1e10:
                         const_origin = (c_lower_bound[i] + c_upper_bound[i]) / 2
                     else:
                         const_origin[i] *= 10
-        
+
         adv_xs = torch.from_numpy(best_perturbation)
-        adv_xs=torch.tensor(adv_xs, dtype=torch.float32)
+        adv_xs = torch.tensor(adv_xs, dtype=torch.float32)
         return adv_xs

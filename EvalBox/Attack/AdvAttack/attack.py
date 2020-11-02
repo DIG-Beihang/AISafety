@@ -1,22 +1,23 @@
 #!/usr/bin/env python
 # coding=UTF-8
-'''
+"""
 @Author: Tao Hang
 @LastEditors: Tao Hang
 @Description: 
 @Date: 2019-03-26 10:21:50
 @LastEditTime: 2019-04-09 15:20:55
-'''
+"""
 
 from abc import ABCMeta
 from abc import abstractmethod
 import torch.utils.data as Data
 
+
 class Attack(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, model, device,IsTargeted):
-        '''
+    def __init__(self, model, device, IsTargeted):
+        """
         @description: 
         @param {
             model:需要测试的模型
@@ -24,32 +25,36 @@ class Attack(object):
             IsTargeted:是否是目标攻击
             }
         @return: None
-        '''
+        """
         self.model = model
         self.device = device
-        self.IsTargeted=IsTargeted
+        self.IsTargeted = IsTargeted
         self.init_model(device)
 
-    def init_model(self,device):
+    def init_model(self, device):
         self.model.eval().to(device)
 
-    def prepare_data(self,adv_xs=None, cln_ys=None, target_preds=None, target_flag=False):
+    def prepare_data(
+        self, adv_xs=None, cln_ys=None, target_preds=None, target_flag=False
+    ):
         device = self.device
         self.init_model(device)
-        assert len(adv_xs) == len(cln_ys), 'examples and labels do not match.'
+        assert len(adv_xs) == len(cln_ys), "examples and labels do not match."
         if not target_flag:
             dataset = Data.TensorDataset(adv_xs, cln_ys)
         else:
             dataset = Data.TensorDataset(adv_xs, target_preds)
-        data_loader = Data.DataLoader(dataset, batch_size=self.batch_size, num_workers=1)
+        data_loader = Data.DataLoader(
+            dataset, batch_size=self.batch_size, num_workers=1
+        )
 
-        return  data_loader,device
+        return data_loader, device
 
     @abstractmethod
     def generate(self):
-        '''
+        """
         @description: Abstract method
         @param {type} 
         @return: 
-        '''
+        """
         raise NotImplementedError

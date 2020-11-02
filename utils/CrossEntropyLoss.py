@@ -1,7 +1,7 @@
 import numpy as np
 
-class CrossEntropyLoss():
 
+class CrossEntropyLoss:
     def __init__(self, weight=None, size_average=True):
         """
         初始化参数，因为要实现 torch.nn.CrossEntropyLoss 的两个比较重要的参数
@@ -13,7 +13,6 @@ class CrossEntropyLoss():
         self.weight = weight
         self.size_average = size_average
 
-
     def __call__(self, input, target):
         """
         计算损失
@@ -24,20 +23,20 @@ class CrossEntropyLoss():
         :return: 损失
         """
 
-        batch_loss = 0.
-        input=input.detach().numpy()
-        target=target.detach().numpy()
-        print(input.shape[0],"input.shape[0]")
+        batch_loss = 0.0
+        input = input.detach().numpy()
+        target = target.detach().numpy()
+        print(input.shape[0], "input.shape[0]")
         for i in range(input.shape[0]):
 
-            numerator = np.exp(input[i,target[i]])     # 分子
-            denominator = np.sum(np.exp(input[i, :]))   # 分母
+            numerator = np.exp(input[i, target[i]])  # 分子
+            denominator = np.sum(np.exp(input[i, :]))  # 分母
 
             # 计算单个损失
             loss = -np.log(numerator / denominator)
             if self.weight:
                 loss = self.weight[target[i]] * loss
-            print("单个损失： ",loss)
+            print("单个损失： ", loss)
 
             # 损失累加
             batch_loss += loss
