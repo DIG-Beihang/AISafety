@@ -4,16 +4,29 @@ from PIL import Image
 
 from .corruptions import *
 
-corruption_tuple = (gaussian_noise, shot_noise, impulse_noise, defocus_blur,
-                    glass_blur, motion_blur, zoom_blur, snow, frost, fog,
-                    brightness, contrast, elastic_transform, pixelate,
-                    jpeg_compression, speckle_noise, gaussian_blur, spatter,
-                    saturate)
+corruption_tuple = (
+    gaussian_noise,
+    shot_noise,
+    impulse_noise,
+    defocus_blur,
+    glass_blur,
+    motion_blur,
+    zoom_blur,
+    snow,
+    frost,
+    fog,
+    brightness,
+    contrast,
+    elastic_transform,
+    pixelate,
+    jpeg_compression,
+    speckle_noise,
+    gaussian_blur,
+    spatter,
+    saturate,
+)
 
-corruption_dict = {
-    corr_func.__name__: corr_func
-    for corr_func in corruption_tuple
-}
+corruption_dict = {corr_func.__name__: corr_func for corr_func in corruption_tuple}
 
 
 def corrupt(x, severity=1, corruption_name=None, corruption_number=-1):
@@ -32,20 +45,17 @@ def corrupt(x, severity=1, corruption_name=None, corruption_number=-1):
     """
 
     if corruption_name:
-        x_corrupted = corruption_dict[corruption_name](Image.fromarray(x),
-                                                       severity)
+        x_corrupted = corruption_dict[corruption_name](Image.fromarray(x), severity)
     elif corruption_number != -1:
-        x_corrupted = corruption_tuple[corruption_number](Image.fromarray(x),
-                                                          severity)
+        x_corrupted = corruption_tuple[corruption_number](Image.fromarray(x), severity)
     else:
-        raise ValueError(
-            "Either corruption_name or corruption_number must be passed")
+        raise ValueError("Either corruption_name or corruption_number must be passed")
 
     return np.uint8(x_corrupted)
 
 
 def corAttack(xs=None, ys=None, severity=1, corruption_name=None, corruption_number=1):
-    '''
+    """
     @description: 
     @param {
         xs:
@@ -54,14 +64,14 @@ def corAttack(xs=None, ys=None, severity=1, corruption_name=None, corruption_num
         corruption_number:
     } 
     @return: cor_xs
-    '''
+    """
     # print(xs.shape)
     copy_xs = xs.permute(0, 2, 3, 1).numpy()
     cor_xs = []
     for x in copy_xs:
-        x = (x * 255).astype(np.uint8)       
+        x = (x * 255).astype(np.uint8)
         cor_x = corrupt(x * 255, severity, corruption_name, corruption_number)
-        cor_xs.append(torch.from_numpy(cor_x / 255.))
+        cor_xs.append(torch.from_numpy(cor_x / 255.0))
 
     cor_xs = torch.stack(cor_xs, 0).permute(0, 3, 1, 2)
     return cor_xs

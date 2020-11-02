@@ -22,12 +22,20 @@ def all_files_under(path, extension=None, append_path=True, sort=True):
         if extension is None:
             filenames = [os.path.join(path, fname) for fname in os.listdir(path)]
         else:
-            filenames = [os.path.join(path, fname) for fname in os.listdir(path) if fname.endswith(extension)]
+            filenames = [
+                os.path.join(path, fname)
+                for fname in os.listdir(path)
+                if fname.endswith(extension)
+            ]
     else:
         if extension is None:
             filenames = [os.path.basename(fname) for fname in os.listdir(path)]
         else:
-            filenames = [os.path.basename(fname) for fname in os.listdir(path) if fname.endswith(extension)]
+            filenames = [
+                os.path.basename(fname)
+                for fname in os.listdir(path)
+                if fname.endswith(extension)
+            ]
 
     if sort:
         filenames = sorted(filenames)
@@ -45,9 +53,13 @@ def image_shape(filename):
 def imagefiles2arrs(filenames):
     img_shape = image_shape(filenames[0])
     if len(img_shape) == 3:
-        images_arr = np.zeros((len(filenames), img_shape[0], img_shape[1], img_shape[2]), dtype=np.float32)
+        images_arr = np.zeros(
+            (len(filenames), img_shape[0], img_shape[1], img_shape[2]), dtype=np.float32
+        )
     elif len(img_shape) == 2:
-        images_arr = np.zeros((len(filenames), img_shape[0], img_shape[1]), dtype=np.float32)
+        images_arr = np.zeros(
+            (len(filenames), img_shape[0], img_shape[1]), dtype=np.float32
+        )
 
     for file_index in range(len(filenames)):
         img = Image.open(filenames[file_index])
@@ -121,7 +133,9 @@ def discriminator_shape(n, d_out_shape):
     return None
 
 
-def input2discriminator(real_img_patches, real_vessel_patches, fake_vessel_patches, d_out_shape):
+def input2discriminator(
+    real_img_patches, real_vessel_patches, fake_vessel_patches, d_out_shape
+):
     real = np.concatenate((real_img_patches, real_vessel_patches), axis=3)
     fake = np.concatenate((real_img_patches, fake_vessel_patches), axis=3)
 
@@ -129,7 +143,7 @@ def input2discriminator(real_img_patches, real_vessel_patches, fake_vessel_patch
 
     # real : 1, fake : 0
     d_y_batch = np.ones(discriminator_shape(d_x_batch.shape[0], d_out_shape))
-    d_y_batch[real.shape[0]:, ...] = 0
+    d_y_batch[real.shape[0] :, ...] = 0
 
     return d_x_batch, d_y_batch
 
@@ -174,43 +188,61 @@ def AUC_ROC(true_vessel_arr, pred_vessel_arr, save_fname):
     Area under the ROC curve with x axis flipped
     """
     fpr, tpr, _ = roc_curve(true_vessel_arr, pred_vessel_arr)  # ,pos_label='T') # by z
-    #save_obj({"fpr": fpr, "tpr": tpr}, save_fname)
+    # save_obj({"fpr": fpr, "tpr": tpr}, save_fname)
     AUC_ROC = roc_auc_score(true_vessel_arr.flatten(), pred_vessel_arr.flatten())
     return AUC_ROC
 
 
 def plot_AUC_ROC(fprs, tprs, method_names, fig_dir, op_pts):
     # set font style
-    font = {'family': 'serif'}
-    matplotlib.rc('font', **font)
+    font = {"family": "serif"}
+    matplotlib.rc("font", **font)
 
     # sort the order of plots manually for eye-pleasing plots
-    colors = ['r', 'b', 'y', 'g', '#7e7e7e', 'm', 'c', 'k', '#cd919e'] if len(fprs) == 9 else ['r', 'y', 'm', 'g', 'k']
+    colors = (
+        ["r", "b", "y", "g", "#7e7e7e", "m", "c", "k", "#cd919e"]
+        if len(fprs) == 9
+        else ["r", "y", "m", "g", "k"]
+    )
     indices = [7, 2, 5, 3, 4, 6, 1, 8, 0] if len(fprs) == 9 else [4, 1, 2, 3, 0]
 
     # print auc
     print("****** ROC AUC ******")
     print(
-        "CAVEAT : AUC of V-GAN with 8bit images might be lower than the floating point array (check <home>/pretrained/auc_roc*.npy)")
+        "CAVEAT : AUC of V-GAN with 8bit images might be lower than the floating point array (check <home>/pretrained/auc_roc*.npy)"
+    )
     for index in indices:
-        if method_names[index] != 'CRFs' and method_names[index] != '2nd_manual':
-            print("{} : {:04}".format(method_names[index], auc(fprs[index], tprs[index])))
+        if method_names[index] != "CRFs" and method_names[index] != "2nd_manual":
+            print(
+                "{} : {:04}".format(method_names[index], auc(fprs[index], tprs[index]))
+            )
 
     # plot results
     for index in indices:
-        if method_names[index] == 'CRFs':
-            plt.plot(fprs[index], tprs[index], colors[index] + '*', label=method_names[index].replace("_", " "))
-        elif method_names[index] == '2nd_manual':
-            plt.plot(fprs[index], tprs[index], colors[index] + '*', label='Human')
+        if method_names[index] == "CRFs":
+            plt.plot(
+                fprs[index],
+                tprs[index],
+                colors[index] + "*",
+                label=method_names[index].replace("_", " "),
+            )
+        elif method_names[index] == "2nd_manual":
+            plt.plot(fprs[index], tprs[index], colors[index] + "*", label="Human")
         else:
-            plt.step(fprs[index], tprs[index], colors[index], where='post', label=method_names[index].replace("_", " "),
-                     linewidth=1.5)
+            plt.step(
+                fprs[index],
+                tprs[index],
+                colors[index],
+                where="post",
+                label=method_names[index].replace("_", " "),
+                linewidth=1.5,
+            )
 
     # plot individual operation points
     for op_pt in op_pts:
-        plt.plot(op_pt[0], op_pt[1], 'r.')
+        plt.plot(op_pt[0], op_pt[1], "r.")
 
-    plt.title('ROC Curve')
+    plt.title("ROC Curve")
     plt.xlabel("1-Specificity")
     plt.ylabel("Sensitivity")
     plt.xlim(0, 0.3)
@@ -222,38 +254,58 @@ def plot_AUC_ROC(fprs, tprs, method_names, fig_dir, op_pts):
 
 def plot_AUC_PR(precisions, recalls, method_names, fig_dir, op_pts):
     # set font style
-    font = {'family': 'serif'}
-    matplotlib.rc('font', **font)
+    font = {"family": "serif"}
+    matplotlib.rc("font", **font)
 
     # sort the order of plots manually for eye-pleasing plots
-    colors = ['r', 'b', 'y', 'g', '#7e7e7e', 'm', 'c', 'k', '#cd919e'] if len(precisions) == 9 else ['r', 'y', 'm', 'g',
-                                                                                                     'k']
+    colors = (
+        ["r", "b", "y", "g", "#7e7e7e", "m", "c", "k", "#cd919e"]
+        if len(precisions) == 9
+        else ["r", "y", "m", "g", "k"]
+    )
     indices = [7, 2, 5, 3, 4, 6, 1, 8, 0] if len(precisions) == 9 else [4, 1, 2, 3, 0]
 
     # print auc
     print("****** Precision Recall AUC ******")
     print(
-        "CAVEAT : AUC of V-GAN with 8bit images might be lower than the floating point array (check <home>/pretrained/auc_pr*.npy)")
+        "CAVEAT : AUC of V-GAN with 8bit images might be lower than the floating point array (check <home>/pretrained/auc_pr*.npy)"
+    )
     for index in indices:
-        if method_names[index] != 'CRFs' and method_names[index] != '2nd_manual':
-            print("{} : {:04}".format(method_names[index], auc(recalls[index], precisions[index])))
+        if method_names[index] != "CRFs" and method_names[index] != "2nd_manual":
+            print(
+                "{} : {:04}".format(
+                    method_names[index], auc(recalls[index], precisions[index])
+                )
+            )
 
     # plot results
     for index in indices:
-        if method_names[index] == 'CRFs':
-            plt.plot(recalls[index], precisions[index], colors[index] + '*',
-                     label=method_names[index].replace("_", " "))
-        elif method_names[index] == '2nd_manual':
-            plt.plot(recalls[index], precisions[index], colors[index] + '*', label='Human')
+        if method_names[index] == "CRFs":
+            plt.plot(
+                recalls[index],
+                precisions[index],
+                colors[index] + "*",
+                label=method_names[index].replace("_", " "),
+            )
+        elif method_names[index] == "2nd_manual":
+            plt.plot(
+                recalls[index], precisions[index], colors[index] + "*", label="Human"
+            )
         else:
-            plt.step(recalls[index], precisions[index], colors[index], where='post',
-                     label=method_names[index].replace("_", " "), linewidth=1.5)
+            plt.step(
+                recalls[index],
+                precisions[index],
+                colors[index],
+                where="post",
+                label=method_names[index].replace("_", " "),
+                linewidth=1.5,
+            )
 
     # plot individual operation points
     for op_pt in op_pts:
-        plt.plot(op_pt[0], op_pt[1], 'r.')
+        plt.plot(op_pt[0], op_pt[1], "r.")
 
-    plt.title('Precision Recall Curve')
+    plt.title("Precision Recall Curve")
     plt.xlabel("Recall")
     plt.ylabel("Precision")
     plt.xlim(0.5, 1.0)
@@ -267,26 +319,30 @@ def AUC_PR(true_vessel_img, pred_vessel_img, save_fname):
     """
     Precision-recall curve
     """
-    precision, recall, _ = precision_recall_curve(true_vessel_img.flatten(), pred_vessel_img.flatten(), pos_label=1)
-    #save_obj({"precision": precision, "recall": recall}, save_fname)
+    precision, recall, _ = precision_recall_curve(
+        true_vessel_img.flatten(), pred_vessel_img.flatten(), pos_label=1
+    )
+    # save_obj({"precision": precision, "recall": recall}, save_fname)
     AUC_prec_rec = auc(recall, precision)
     return AUC_prec_rec
 
 
 def save_obj(obj, name):
-    with open(name, 'wb') as f:
+    with open(name, "wb") as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 
 def load_obj(name):
-    with open(name, 'rb') as f:
+    with open(name, "rb") as f:
         return pickle.load(f)
 
 
 def best_f1_threshold(precision, recall, thresholds):
     best_f1 = -1
     for index in range(len(precision)):
-        curr_f1 = 2. * precision[index] * recall[index] / (precision[index] + recall[index])
+        curr_f1 = (
+            2.0 * precision[index] * recall[index] / (precision[index] + recall[index])
+        )
         if best_f1 < curr_f1:
             best_f1 = curr_f1
             best_threshold = thresholds[index]
@@ -307,9 +363,12 @@ def threshold_by_otsu(pred_vessels, masks, flatten=True):
 
 
 def threshold_by_f1(true_vessels, generated, masks, flatten=True, f1_score=False):
-    vessels_in_mask, generated_in_mask = pixel_values_in_mask(true_vessels, generated, masks)
-    precision, recall, thresholds = precision_recall_curve(vessels_in_mask.flatten(), generated_in_mask.flatten(),
-                                                           pos_label=1)
+    vessels_in_mask, generated_in_mask = pixel_values_in_mask(
+        true_vessels, generated, masks
+    )
+    precision, recall, thresholds = precision_recall_curve(
+        vessels_in_mask.flatten(), generated_in_mask.flatten(), pos_label=1
+    )
     best_f1, best_threshold = best_f1_threshold(precision, recall, thresholds)
 
     pred_vessels_bin = np.zeros(generated.shape)
@@ -328,26 +387,30 @@ def threshold_by_f1(true_vessels, generated, masks, flatten=True, f1_score=False
 
 
 def misc_measures_evaluation(true_vessels, pred_vessels, masks):
-    thresholded_vessel_arr, f1_score = threshold_by_f1(true_vessels, pred_vessels, masks, f1_score=True)
+    thresholded_vessel_arr, f1_score = threshold_by_f1(
+        true_vessels, pred_vessels, masks, f1_score=True
+    )
     true_vessel_arr = true_vessels[masks == 1].flatten()
 
     cm = confusion_matrix(true_vessel_arr, thresholded_vessel_arr)
-    acc = 1. * (cm[0, 0] + cm[1, 1]) / np.sum(cm)
-    sensitivity = 1. * cm[1, 1] / (cm[1, 0] + cm[1, 1])
-    specificity = 1. * cm[0, 0] / (cm[0, 1] + cm[0, 0])
+    acc = 1.0 * (cm[0, 0] + cm[1, 1]) / np.sum(cm)
+    sensitivity = 1.0 * cm[1, 1] / (cm[1, 0] + cm[1, 1])
+    specificity = 1.0 * cm[0, 0] / (cm[0, 1] + cm[0, 0])
     return f1_score, acc, sensitivity, specificity
 
 
 def misc_measures(true_vessel_arr, pred_vessel_arr):
     cm = confusion_matrix(true_vessel_arr, pred_vessel_arr)
-    acc = 1. * (cm[0, 0] + cm[1, 1]) / np.sum(cm)
-    sensitivity = 1. * cm[1, 1] / (cm[1, 0] + cm[1, 1])
-    specificity = 1. * cm[0, 0] / (cm[0, 1] + cm[0, 0])
+    acc = 1.0 * (cm[0, 0] + cm[1, 1]) / np.sum(cm)
+    sensitivity = 1.0 * cm[1, 1] / (cm[1, 0] + cm[1, 1])
+    specificity = 1.0 * cm[0, 0] / (cm[0, 1] + cm[0, 0])
     return acc, sensitivity, specificity
 
 
 def dice_coefficient(true_vessels, pred_vessels, masks):
-    thresholded_vessels = threshold_by_f1(true_vessels, pred_vessels, masks, flatten=False)
+    thresholded_vessels = threshold_by_f1(
+        true_vessels, pred_vessels, masks, flatten=False
+    )
 
     true_vessels = true_vessels.astype(np.bool)
     thresholded_vessels = thresholded_vessels.astype(np.bool)
@@ -358,7 +421,7 @@ def dice_coefficient(true_vessels, pred_vessels, masks):
     size2 = np.count_nonzero(thresholded_vessels)
 
     try:
-        dc = 2. * intersection / float(size1 + size2)
+        dc = 2.0 * intersection / float(size1 + size2)
     except ZeroDivisionError:
         dc = 0.0
 
@@ -375,7 +438,7 @@ def dice_coefficient_in_train(true_vessel_arr, pred_vessel_arr):
     size2 = np.count_nonzero(pred_vessel_arr)
 
     try:
-        dc = 2. * intersection / float(size1 + size2)
+        dc = 2.0 * intersection / float(size1 + size2)
     except ZeroDivisionError:
         dc = 0.0
 
@@ -392,8 +455,12 @@ def pad_imgs(imgs, img_size):
     elif len(imgs.shape) == 3:
         padded = np.zeros((imgs.shape[0], img_size[0], img_size[1]))
 
-    padded[:, (target_h - img_h) // 2:(target_h - img_h) // 2 + img_h,
-    (target_w - img_w) // 2:(target_w - img_w) // 2 + img_w, ...] = imgs
+    padded[
+        :,
+        (target_h - img_h) // 2 : (target_h - img_h) // 2 + img_h,
+        (target_w - img_w) // 2 : (target_w - img_w) // 2 + img_w,
+        ...,
+    ] = imgs
 
     return padded
 
@@ -406,7 +473,8 @@ def random_perturbation(imgs):
         imgs[i, ...] = np.asarray(im).astype(np.float32)
     return imgs
 
-def get_imgs(target_dir, augmentation, img_size,padding=False, mask=False):
+
+def get_imgs(target_dir, augmentation, img_size, padding=False, mask=False):
 
     img_files, vessel_files, mask_files = DRIVE_files(target_dir)
 
@@ -421,31 +489,27 @@ def get_imgs(target_dir, augmentation, img_size,padding=False, mask=False):
     # for maskn in mask_files:
     #     print(maskn)
 
-
     # load images
     fundus_imgs = imagefiles2arrs(img_files)
     vessel_imgs = imagefiles2arrs(vessel_files) / 255
-    print('After to array')
+    print("After to array")
 
     print(fundus_imgs.shape)
     print(img_size)
 
-
-
     if padding:
-        fundus_imgs=pad_imgs(fundus_imgs, img_size)
-        vessel_imgs=pad_imgs(vessel_imgs, img_size)
-        print('after padding')
+        fundus_imgs = pad_imgs(fundus_imgs, img_size)
+        vessel_imgs = pad_imgs(vessel_imgs, img_size)
+        print("after padding")
 
-
-    assert (np.min(vessel_imgs) == 0 and np.max(vessel_imgs) == 1)
+    assert np.min(vessel_imgs) == 0 and np.max(vessel_imgs) == 1
 
     if mask:
         mask_imgs = imagefiles2arrs(mask_files) / 255
         mask_imgs = pad_imgs(mask_imgs, img_size)
-        assert (np.min(mask_imgs) == 0 and np.max(mask_imgs) == 1)
+        assert np.min(mask_imgs) == 0 and np.max(mask_imgs) == 1
 
-    print('before aygmentation')
+    print("before aygmentation")
     # augmentation
     if augmentation:
         # augment the original image (flip, rotate)
@@ -454,10 +518,9 @@ def get_imgs(target_dir, augmentation, img_size,padding=False, mask=False):
         # print('all_fundus_imgs size1:',all_fundus_imgs.count())
         # print('all_vessel_imgs size1:',all_vessel_imgs.count())
 
-
         flipped_imgs = fundus_imgs[:, :, ::-1, :]  # flipped imgs
         flipped_vessels = vessel_imgs[:, :, ::-1]
-        print('after flip')
+        print("after flip")
 
         all_fundus_imgs.append(flipped_imgs)
         all_vessel_imgs.append(flipped_vessels)
@@ -465,29 +528,42 @@ def get_imgs(target_dir, augmentation, img_size,padding=False, mask=False):
         # print('all_fundus_imgs size2:', all_fundus_imgs.count())
         # print('all_vessel_imgs size2:', all_vessel_imgs.count())
 
-
         # for angle in range(3,360,3):  # rotated imgs 3~360
         for angle in range(10, 360, 10):  # rotated imgs 10~360
-            all_fundus_imgs.append(random_perturbation(rotate(fundus_imgs, angle, axes=(1, 2), reshape=False)))
-            all_fundus_imgs.append(random_perturbation(rotate(flipped_imgs, angle, axes=(1, 2), reshape=False)))
-            print('inside rotate')
-            all_vessel_imgs.append(rotate(vessel_imgs, angle, axes=(1, 2), reshape=False))
-            all_vessel_imgs.append(rotate(flipped_vessels, angle, axes=(1, 2), reshape=False))
+            all_fundus_imgs.append(
+                random_perturbation(
+                    rotate(fundus_imgs, angle, axes=(1, 2), reshape=False)
+                )
+            )
+            all_fundus_imgs.append(
+                random_perturbation(
+                    rotate(flipped_imgs, angle, axes=(1, 2), reshape=False)
+                )
+            )
+            print("inside rotate")
+            all_vessel_imgs.append(
+                rotate(vessel_imgs, angle, axes=(1, 2), reshape=False)
+            )
+            all_vessel_imgs.append(
+                rotate(flipped_vessels, angle, axes=(1, 2), reshape=False)
+            )
 
-        print('end augmentation')
+        print("end augmentation")
 
         fundus_imgs = np.concatenate(all_fundus_imgs, axis=0)
-        print('first concate')
+        print("first concate")
         vessel_imgs = np.round((np.concatenate(all_vessel_imgs, axis=0)))
 
-    print('out of augmentation')
+    print("out of augmentation")
 
     # z score with mean, std of each image
     n_all_imgs = fundus_imgs.shape[0]
-    print('n_all_imgs:', n_all_imgs)
+    print("n_all_imgs:", n_all_imgs)
 
     for index in range(n_all_imgs):
-        mean = np.mean(fundus_imgs[index, ...][fundus_imgs[index, ..., 0] > 40.0], axis=0)
+        mean = np.mean(
+            fundus_imgs[index, ...][fundus_imgs[index, ..., 0] > 40.0], axis=0
+        )
         std = np.std(fundus_imgs[index, ...][fundus_imgs[index, ..., 0] > 40.0], axis=0)
         assert len(mean) == 3 and len(std) == 3
         fundus_imgs[index, ...] = (fundus_imgs[index, ...] - mean) / std
@@ -498,17 +574,18 @@ def get_imgs(target_dir, augmentation, img_size,padding=False, mask=False):
         return fundus_imgs, vessel_imgs
 
 
-
 def operating_pts_human_experts(gt_vessels, pred_vessels, masks):
-    gt_vessels_in_mask, pred_vessels_in_mask = pixel_values_in_mask(gt_vessels, pred_vessels, masks, split_by_img=True)
+    gt_vessels_in_mask, pred_vessels_in_mask = pixel_values_in_mask(
+        gt_vessels, pred_vessels, masks, split_by_img=True
+    )
 
     n = gt_vessels_in_mask.shape[0]
     op_pts_roc, op_pts_pr = [], []
     for i in range(n):
         cm = confusion_matrix(gt_vessels_in_mask[i], pred_vessels_in_mask[i])
-        fpr = 1 - 1. * cm[0, 0] / (cm[0, 1] + cm[0, 0])
-        tpr = 1. * cm[1, 1] / (cm[1, 0] + cm[1, 1])
-        prec = 1. * cm[1, 1] / (cm[0, 1] + cm[1, 1])
+        fpr = 1 - 1.0 * cm[0, 0] / (cm[0, 1] + cm[0, 0])
+        tpr = 1.0 * cm[1, 1] / (cm[1, 0] + cm[1, 1])
+        prec = 1.0 * cm[1, 1] / (cm[0, 1] + cm[1, 1])
         recall = tpr
         op_pts_roc.append((fpr, tpr))
         op_pts_pr.append((recall, prec))
@@ -521,18 +598,33 @@ def pixel_values_in_mask(true_vessels, pred_vessels, masks, split_by_img=False):
     assert np.max(true_vessels) == 1.0 and np.min(true_vessels) == 0.0
     print(np.max(masks), np.min(masks))
     assert np.max(masks) == 1.0 and np.min(masks) == 0.0
-    assert pred_vessels.shape[0] == true_vessels.shape[0] and masks.shape[0] == true_vessels.shape[0]
-    assert pred_vessels.shape[1] == true_vessels.shape[1] and masks.shape[1] == true_vessels.shape[1]
-    assert pred_vessels.shape[2] == true_vessels.shape[2] and masks.shape[2] == true_vessels.shape[2]
-    print('mask shape', masks.shape)
+    assert (
+        pred_vessels.shape[0] == true_vessels.shape[0]
+        and masks.shape[0] == true_vessels.shape[0]
+    )
+    assert (
+        pred_vessels.shape[1] == true_vessels.shape[1]
+        and masks.shape[1] == true_vessels.shape[1]
+    )
+    assert (
+        pred_vessels.shape[2] == true_vessels.shape[2]
+        and masks.shape[2] == true_vessels.shape[2]
+    )
+    print("mask shape", masks.shape)
     if split_by_img:
         n = pred_vessels.shape[0]
-        return np.array([true_vessels[i, ...][masks[i, ...] == 1].flatten() for i in range(n)]), np.array(
-            [pred_vessels[i, ...][masks[i, ...] == 1].flatten() for i in range(n)])
+        return (
+            np.array(
+                [true_vessels[i, ...][masks[i, ...] == 1].flatten() for i in range(n)]
+            ),
+            np.array(
+                [pred_vessels[i, ...][masks[i, ...] == 1].flatten() for i in range(n)]
+            ),
+        )
     else:
-        print('true_vessels.shape', true_vessels.shape)
-        print('pred_vessels.shape', pred_vessels.shape)
-        print('mask.shape', masks.shape)
+        print("true_vessels.shape", true_vessels.shape)
+        print("pred_vessels.shape", pred_vessels.shape)
+        print("mask.shape", masks.shape)
         return true_vessels[masks == 1].flatten(), pred_vessels[masks == 1].flatten()
 
 
@@ -556,33 +648,54 @@ def crop_to_original(imgs, ori_shape):
         if len(imgs.shape) > 2:
             ori_h, ori_w = ori_shape[1], ori_shape[2]
             pred_h, pred_w = pred_shape[1], pred_shape[2]
-            return imgs[:, (pred_h - ori_h) // 2:(pred_h - ori_h) // 2 + ori_h,
-                   (pred_w - ori_w) // 2:(pred_w - ori_w) // 2 + ori_w]
+            return imgs[
+                :,
+                (pred_h - ori_h) // 2 : (pred_h - ori_h) // 2 + ori_h,
+                (pred_w - ori_w) // 2 : (pred_w - ori_w) // 2 + ori_w,
+            ]
         else:
             ori_h, ori_w = ori_shape[0], ori_shape[1]
             pred_h, pred_w = pred_shape[0], pred_shape[1]
-            return imgs[(pred_h - ori_h) // 2:(pred_h - ori_h) // 2 + ori_h,
-                   (pred_w - ori_w) // 2:(pred_w - ori_w) // 2 + ori_w]
+            return imgs[
+                (pred_h - ori_h) // 2 : (pred_h - ori_h) // 2 + ori_h,
+                (pred_w - ori_w) // 2 : (pred_w - ori_w) // 2 + ori_w,
+            ]
 
 
 def difference_map(ori_vessel, pred_vessel, mask):
     # ori_vessel : an RGB image
 
-    thresholded_vessel = threshold_by_f1(np.expand_dims(ori_vessel, axis=0), np.expand_dims(pred_vessel, axis=0),
-                                         np.expand_dims(mask, axis=0), flatten=False)
+    thresholded_vessel = threshold_by_f1(
+        np.expand_dims(ori_vessel, axis=0),
+        np.expand_dims(pred_vessel, axis=0),
+        np.expand_dims(mask, axis=0),
+        flatten=False,
+    )
 
     thresholded_vessel = np.squeeze(thresholded_vessel, axis=0)
     diff_map = np.zeros((ori_vessel.shape[0], ori_vessel.shape[1], 3))
-    diff_map[(ori_vessel == 1) & (thresholded_vessel == 1)] = (0, 255, 0)  # Green (overlapping)
-    diff_map[(ori_vessel == 1) & (thresholded_vessel != 1)] = (255, 0, 0)  # Red (false negative, missing in pred)
-    diff_map[(ori_vessel != 1) & (thresholded_vessel == 1)] = (0, 0, 255)  # Blue (false positive)
+    diff_map[(ori_vessel == 1) & (thresholded_vessel == 1)] = (
+        0,
+        255,
+        0,
+    )  # Green (overlapping)
+    diff_map[(ori_vessel == 1) & (thresholded_vessel != 1)] = (
+        255,
+        0,
+        0,
+    )  # Red (false negative, missing in pred)
+    diff_map[(ori_vessel != 1) & (thresholded_vessel == 1)] = (
+        0,
+        0,
+        255,
+    )  # Blue (false positive)
 
     # compute dice coefficient for a given image
     overlap = len(diff_map[(ori_vessel == 1) & (thresholded_vessel == 1)])
     fn = len(diff_map[(ori_vessel == 1) & (thresholded_vessel != 1)])
     fp = len(diff_map[(ori_vessel != 1) & (thresholded_vessel == 1)])
 
-    return diff_map, 2. * overlap / (2 * overlap + fn + fp)
+    return diff_map, 2.0 * overlap / (2 * overlap + fn + fp)
 
 
 class Scheduler:
@@ -606,8 +719,12 @@ class Scheduler:
 
     def update_steps(self, n_round):
         key = str(n_round)
-        if key in self.schedules['lr_decay']:
-            self.lr = self.init_lr * self.schedules['lr_decay'][key]
-        if key in self.schedules['step_decay']:
-            self.dsteps = max(int(self.init_dsteps * self.schedules['step_decay'][key]), 1)
-            self.gsteps = max(int(self.init_gsteps * self.schedules['step_decay'][key]), 1)
+        if key in self.schedules["lr_decay"]:
+            self.lr = self.init_lr * self.schedules["lr_decay"][key]
+        if key in self.schedules["step_decay"]:
+            self.dsteps = max(
+                int(self.init_dsteps * self.schedules["step_decay"][key]), 1
+            )
+            self.gsteps = max(
+                int(self.init_gsteps * self.schedules["step_decay"][key]), 1
+            )

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding=UTF-8
-'''
+"""
 @Author:
 @LastEditors:
 @Description:
 @Date: 2019-06-21
 @LastEditTime: 2019-06-21
-'''
+"""
 # !/usr/bin/env python
 # coding=UTF-8
 
@@ -19,13 +19,10 @@ from EvalBox.Defense.defense import Defense
 
 
 class ANP(Defense):
-    def __init__(self,
-                 model=None,
-                 device=None,
-                 optimizer=None,
-                 scheduler=None,
-                 **kwargs):
-        '''
+    def __init__(
+        self, model=None, device=None, optimizer=None, scheduler=None, **kwargs
+    ):
+        """
         @description: PGD-based adversarial training (PAT)
         @param {
             model:
@@ -35,7 +32,7 @@ class ANP(Defense):
             kwargs:
         }
         @return: None
-        '''
+        """
         super().__init__(model, device)
 
         self.criterion = torch.nn.CrossEntropyLoss()
@@ -45,7 +42,7 @@ class ANP(Defense):
         self._parse_params(**kwargs)
 
     def _parse_params(self, **kwargs):
-        '''
+        """
         @description:
         @param {
             num_epochs:
@@ -53,14 +50,14 @@ class ANP(Defense):
             alpha:
         }
         @return: None
-        '''
-        self.num_epochs = int(kwargs.get('num_epochs', 120))
-        self.enable_lat = bool(kwargs.get("enable_lat",True))
-        self.epsilon = float(kwargs.get('epsilon', 0.6))
-        self.alpha = float(kwargs.get('alpha', 0.6))
-        self.batch_size = int(kwargs.get('batch_size',64))
+        """
+        self.num_epochs = int(kwargs.get("num_epochs", 120))
+        self.enable_lat = bool(kwargs.get("enable_lat", True))
+        self.epsilon = float(kwargs.get("epsilon", 0.6))
+        self.alpha = float(kwargs.get("alpha", 0.6))
+        self.batch_size = int(kwargs.get("batch_size", 64))
 
-    def set_anp(self,epoch):
+    def set_anp(self, epoch):
         if epoch < 40:
             return 0, 0, 1
         elif epoch < 60:
@@ -73,14 +70,14 @@ class ANP(Defense):
             return 0, 0, 1
 
     def valid(self, test_loader=None, epoch=None):
-        '''
+        """
         @description:
         @param {
             valid_loader:
             epoch:
         }
         @return: val_acc
-        '''
+        """
         if self.enable_lat:
             self.model.zero_reg()
 
@@ -100,19 +97,19 @@ class ANP(Defense):
                 total += inputs.shape[0]
                 correct += (preds == labels).sum().item()
             val_acc = correct / total
-        print('\nvalid after train {}/{} epochs'.format(epoch+1, self.num_epochs))
-        print('Accuracy of the model on the test images: {} '.format(val_acc))
+        print("\nvalid after train {}/{} epochs".format(epoch + 1, self.num_epochs))
+        print("Accuracy of the model on the test images: {} ".format(val_acc))
         return val_acc
 
-    def train(self, train_loader=None, epoch = None):
-        '''
+    def train(self, train_loader=None, epoch=None):
+        """
         @description:
         @param {
             train_loader:
             epoch:
         }
         @return: None
-        '''
+        """
         device = self.device
         self.model.to(device)
         # ---------------------------------------------------------
@@ -125,7 +122,7 @@ class ANP(Defense):
         for step, (x, y) in enumerate(train_loader):
             # enable anp training
             if not self.enable_lat:
-                    pro_num = 1
+                pro_num = 1
             if not len(y) == self.batch_size:
                 continue
             b_x = Variable(x).to(device)
@@ -148,7 +145,7 @@ class ANP(Defense):
                 self.optimizer.step()
                 self.model.save_grad()
 
-            #print train data loss and accuracy
+            # print train data loss and accuracy
             if step % 20 == 0:
                 if self.enable_lat:
                     self.model.zero_reg()
@@ -158,19 +155,31 @@ class ANP(Defense):
                 train_loss = self.criterion(test_output, b_y)
                 pred_y = torch.max(test_output, 1)[1].data.cpu().squeeze().numpy()
 
-                Accuracy = float((pred_y == b_y.data.cpu().numpy()).astype(int).sum()) / float(b_y.size(0))
-                print('\nTrain Epoch {:>2}: [batch:{:>4}/{:>4}]  \ttrain loss={:.4f} \ttrain accuracy={:.4f}===> '
-                      .format(epoch+1, step+1, len(train_loader), train_loss.item(), Accuracy), end=' ')
+                Accuracy = float(
+                    (pred_y == b_y.data.cpu().numpy()).astype(int).sum()
+                ) / float(b_y.size(0))
+                print(
+                    "\nTrain Epoch {:>2}: [batch:{:>4}/{:>4}]  \ttrain loss={:.4f} \ttrain accuracy={:.4f}===> ".format(
+                        epoch + 1,
+                        step + 1,
+                        len(train_loader),
+                        train_loss.item(),
+                        Accuracy,
+                    ),
+                    end=" ",
+                )
 
-    def generate(self, train_loader=None, valid_loader=None, defense_enhanced_saver=None):
-        '''
+    def generate(
+        self, train_loader=None, valid_loader=None, defense_enhanced_saver=None
+    ):
+        """
         @description:
         @param {
             train_loader:
             valid_loader:
         }
         @return: best_model_weights, best_acc
-        '''
+        """
 
         best_val_acc = None
         best_model_weights = self.model.state_dict()
@@ -186,7 +195,7 @@ class ANP(Defense):
             self.train(train_loader, epoch)
             val_acc = self.valid(valid_loader, epoch)
 
-            #self.model.save(name=defense_enhanced_saver)
+            # self.model.save(name=defense_enhanced_saver)
 
             if not best_val_acc or round(val_acc, 4) >= round(best_val_acc, 4):
                 if best_val_acc is not None:
@@ -195,6 +204,9 @@ class ANP(Defense):
                 best_model_weights = self.model.state_dict()
                 self.model.save(name=defense_enhanced_saver)
             else:
-                print('Train Epoch{:>3}: validation dataset accuracy did not improve from {:.4f}\n'.format(epoch+1,
-                                                                                                       best_val_acc))
+                print(
+                    "Train Epoch{:>3}: validation dataset accuracy did not improve from {:.4f}\n".format(
+                        epoch + 1, best_val_acc
+                    )
+                )
         return best_model_weights, best_val_acc

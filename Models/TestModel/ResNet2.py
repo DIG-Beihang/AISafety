@@ -11,17 +11,13 @@ import sys
 
 import torch.nn as nn
 
-sys.path.append('%s/../../' % os.path.dirname(os.path.realpath(__file__)))
+sys.path.append("%s/../../" % os.path.dirname(os.path.realpath(__file__)))
 from Models.basic_module import BasicModule
 
 # Training parameters for CIFAR10
 # global CIFAR10_Training_Parameters
 
-CIFAR10_Training_Parameters = {
-    'num_epochs': 200,
-    'batch_size': 32,
-    'lr': 1e-3
-}
+CIFAR10_Training_Parameters = {"num_epochs": 200, "batch_size": 32, "lr": 1e-3}
 # adjust the learning rate for CIFAR10 training according to the number of epoch
 def adjust_learning_rate(epoch, optimizer):
     minimum_learning_rate = 0.5e-6
@@ -32,16 +28,20 @@ def adjust_learning_rate(epoch, optimizer):
         elif epoch == 180:
             lr_temp = lr_temp * 5e-1
         param_group["lr"] = max(lr_temp, minimum_learning_rate)
-        print('The **learning rate** of the {} epoch is {}'.format(epoch, param_group["lr"]))
+        print(
+            "The **learning rate** of the {} epoch is {}".format(
+                epoch, param_group["lr"]
+            )
+        )
+
+
 def conv3x3(in_planes, out_planes, stride=1):
     # 3x3 convolution with padding
     return nn.Conv2d(
-        in_planes,
-        out_planes,
-        kernel_size=3,
-        stride=stride,
-        padding=1,
-        bias=False)
+        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False
+    )
+
+
 class BasicBlock(BasicModule):
     expansion = 1
 
@@ -72,6 +72,8 @@ class BasicBlock(BasicModule):
         out = self.relu(out)
 
         return out
+
+
 class ResNet_Cifar(BasicModule):
     def __init__(self, block, layers, num_classes=10, thermometer=False, level=1):
         super(ResNet_Cifar, self).__init__()
@@ -82,7 +84,9 @@ class ResNet_Cifar(BasicModule):
             input_channels = 3
 
         self.inplanes = 16
-        self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, stride=1, padding=1, bias=True)
+        self.conv1 = nn.Conv2d(
+            input_channels, 16, kernel_size=3, stride=1, padding=1, bias=True
+        )
         self.bn1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU(inplace=True)
         self.layer1 = self._make_layer(block, 16, layers[0])
@@ -95,7 +99,7 @@ class ResNet_Cifar(BasicModule):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
+                m.weight.data.normal_(0, math.sqrt(2.0 / n))
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
@@ -104,8 +108,15 @@ class ResNet_Cifar(BasicModule):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion, kernel_size=1, stride=stride, bias=True),
-                nn.BatchNorm2d(planes * block.expansion))
+                nn.Conv2d(
+                    self.inplanes,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=True,
+                ),
+                nn.BatchNorm2d(planes * block.expansion),
+            )
 
         layers = list([])
         layers.append(block(self.inplanes, planes, stride, downsample))
@@ -130,9 +141,11 @@ class ResNet_Cifar(BasicModule):
 
         return x
 
+
 def resnet20_cifar(thermometer=False, level=1):
     model = ResNet_Cifar(BasicBlock, [3, 3, 3], thermometer=thermometer, level=level)
     return model
+
 
 def getModel():
     return resnet20_cifar()

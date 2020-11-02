@@ -4,11 +4,12 @@
 # @Time    : 2018/10/12 14:14
 # @Author  : Xiang Ling
 # @Lab     : nesa.zju.edu.cn
-# @File    : basic_module.py 
+# @File    : basic_module.py
 # **************************************
 
 import torch
-import  torchvision.models as models
+import torchvision.models as models
+
 
 class BasicModule(torch.nn.Module):
     """
@@ -32,16 +33,20 @@ class BasicModule(torch.nn.Module):
         :return:
         """
 
-        print('starting to LOAD the ${}$ Model from {} within the {} device'.format(self.model_name, path, device))
-        if device == torch.device('cpu'):
-            self.load_state_dict(torch.load(path, map_location='cpu'))
-            #original=torch.load(path, map_location='cpu')
-#            new = {"model": original["model"]}
+        print(
+            "starting to LOAD the ${}$ Model from {} within the {} device".format(
+                self.model_name, path, device
+            )
+        )
+        if device == torch.device("cpu"):
+            self.load_state_dict(torch.load(path, map_location="cpu"))
+            # original=torch.load(path, map_location='cpu')
+        #            new = {"model": original["model"]}
 
-            # checkpoint = torch.load(path, map_location='cpu')
-            # net=models.resnet18()
-            # net = torch.nn.DataParallel(net)
-            # net.load_state_dict()
+        # checkpoint = torch.load(path, map_location='cpu')
+        # net=models.resnet18()
+        # net = torch.nn.DataParallel(net)
+        # net.load_state_dict()
         else:
             self.load_state_dict(torch.load(path))
 
@@ -52,8 +57,8 @@ class BasicModule(torch.nn.Module):
         :param name:
         :return:
         """
-        assert name is not None, 'please specify the path name to save the module'
+        assert name is not None, "please specify the path name to save the module"
 
-        with open(name, 'wb') as file:
+        with open(name, "wb") as file:
             torch.save(self.state_dict(), file)
-        print('starting to SAVE the ${}$ Model to ${}$\n'.format(self.model_name, name))
+        print("starting to SAVE the ${}$ Model to ${}$\n".format(self.model_name, name))
