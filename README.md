@@ -52,7 +52,7 @@
   python testimport.py --attack_method "FGSM" --evaluation_method "ALDp" --model_dir ""
   ```
 
-  上述命令均将测试ResNet20模型，在FGSM算法攻击下，ALDp指标的评测结果变化。并将结果存在XXXXX。
+  上述命令均将测试ResNet20模型，在FGSM算法攻击下，ALDp指标的评测结果变化。并将结果存在`AISafety/test/temp`。
 
   有关更多示例和用法（例如，如何扩展模型或算法，如何传入参数），请浏览[完备API接口文档](https://aisafety.readthedocs.io/zh_CN/latest/)。
 
