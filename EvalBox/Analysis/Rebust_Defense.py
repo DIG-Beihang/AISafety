@@ -32,52 +32,22 @@ from utils.file_utils import xmlparser
 from utils.io_utils import configurate_Device
 from Models.UserModel import *
 
-
 class Rebust_Defense(Evaluation_Base):
-    def __init__(
-        self,
-        defense_method=None,
-        sample_path=None,
-        label_path=None,
-        image_origin_path=None,
-        label_origin_path=None,
-        gpu_counts=None,
-        gpu_indexs=None,
-        seed=None,
-        Scale_ImageSize=None,
-        Crop_ImageSize=None,
-        kwargs=None,
-    ):
+    def __init__(self, defense_method = None, sample_path = None, label_path = None, \
+                 image_origin_path = None, label_origin_path = None, \
+                 gpu_counts = None, gpu_indexs = None, seed = None, \
+                 Scale_ImageSize = None, Crop_ImageSize = None, kwargs = None):
 
         self._parse_params(kwargs)
-        super(Rebust_Defense, self).__init__(
-            defense_method,
-            sample_path,
-            label_path,
-            image_origin_path,
-            label_origin_path,
-            gpu_counts,
-            gpu_indexs,
-            seed,
-            Scale_ImageSize,
-            Crop_ImageSize,
-            model=None,
-            model_dir=None,
-            defense_model=None,
-            model_defence_dir=None,
-            data_type=None,
-            IS_WHITE=None,
-            IS_SAVE=None,
-            IS_COMPARE_MODEL=None,
-            IS_TARGETTED=None,
-            save_path=None,
-            save_method=None,
-            black_Result_dir=None,
-            batch_size=None,
-        )  # some model that in different setting
+        super(Rebust_Defense, self).__init__(defense_method, \
+            sample_path, label_path, image_origin_path, label_origin_path, \
+            gpu_counts, gpu_indexs, seed, Scale_ImageSize, Crop_ImageSize, \
+            model = None, model_dir = None, defense_model = None, model_defense_dir = None, \
+            data_type = None, IS_WHITE = None, IS_SAVE = None, IS_COMPARE_MODEL = None, \
+            IS_TARGETTED = None, save_path = None, save_method = None, \
+            black_Result_dir = None, batch_size = None)  # some model that in different setting
 
     def _parse_params(self, kwargs):
-
         self.model_name = kwargs.model  # 'resnet20_cifar')
         self.data_type = kwargs.data_type  # 'CIFAR10')
         self.batch_size = kwargs.batch_size  # 64)
@@ -118,30 +88,26 @@ class Rebust_Defense(Evaluation_Base):
 
     def gen_dataloader(self):
         # 这里用的是我们自己已经准备的一些已知网络结构的模型
-        device, dataloader, dataset = self.setting_data(
-            self.Scale_ImageSize,
-            self.sample_path,
-            self.label_path,
-            self.image_origin_path,
-            self.label_origin_path,
-        )
-
+        device, dataloader, dataset = self.setting_data(self.Scale_ImageSize, self.sample_path, self.label_path, self.image_origin_path, self.label_origin_path)
         return device, dataloader, dataset
 
     def gen_dataloader_train(self):
         # 这里用的是我们自己已经准备的一些已知网络结构的模型
-        dataloader, dataset = self.setting_dataset(
-            self.Scale_ImageSize, self.sample_path, self.label_path
-        )
+        transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Pad(4),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(32),
+            transforms.ToTensor()
+        ])
+        dataloader, dataset = self.setting_dataset(self.Scale_ImageSize, self.sample_path, self.label_path, transform)
         return dataset
 
     def gen_dataloader_test(self):
         # 这里用的是我们自己已经准备的一些已知网络结构的模型
         image_valid_path = self.image_origin_path
         label_valid_path = self.label_origin_path
-        dataloader, dataset = self.setting_dataset(
-            self.Scale_ImageSize, image_valid_path, label_valid_path
-        )
+        dataloader, dataset = self.setting_dataset(self.Scale_ImageSize, image_valid_path, label_valid_path)
         return dataset
 
     def gen_defense(self, train_loader, valid_loader):
@@ -149,10 +115,7 @@ class Rebust_Defense(Evaluation_Base):
         self.model = model
         self.device = device
         # print( self.Enhanced_model_save_path)
-        defense_enhanced_saver = (
-            self.Enhanced_model_save_path
-            + "/{}/{}_{}_enhanced.pt".format(dfs_name, self.data_type, dfs_name)
-        )
+        defense_enhanced_saver = (self.Enhanced_model_save_path + "/{}/{}_{}_enhanced.pt".format(dfs_name, self.data_type, dfs_name))
         acc = dfs.generate(train_loader, valid_loader, defense_enhanced_saver)
         print("defensed by {}, result-acc:{}".format(dfs_name, acc))
         return acc, defense_enhanced_saver
@@ -177,9 +140,7 @@ class Rebust_Defense(Evaluation_Base):
 
     def load_model(self, model_name):
         self.config_device()
-        model = self.get_model_param(
-            model_name, self.device, self.config_model_dir_path
-        )
+        model = self.get_model_param(model_name, self.device, self.config_model_dir_path)
         self.model = model
         return
 
@@ -189,13 +150,10 @@ class Rebust_Defense(Evaluation_Base):
         defense = None
         defense_name = None
         optimizer, scheduler = self.load_optim_config_file(model)
-        D_instance = eval(self.defense_method)  #############
+        D_instance = eval(self.defense_method[0])  #############
         config_file_path = self.config_defense_param_xml_dir
         args = xmlparser(config_file_path)
-        defense, defense_name = (
-            D_instance(model, device, optimizer, scheduler, **args),
-            self.defense_method,
-        )
+        defense, defense_name = D_instance(model, device, optimizer, scheduler, **args), self.defense_method
         return device, model, defense, defense_name
 
     def get_parameter(self, config_file_path, keyWord):
@@ -204,7 +162,7 @@ class Rebust_Defense(Evaluation_Base):
         content = self.get_content_form_xml(keyWord, **args)
         return content
 
-    def get_content_form_xml(self, keyword=None, **kwargs):
+    def get_content_form_xml(self, keyword = None, **kwargs):
         # print(kwargs)
         content = kwargs.get(keyword)
         return content

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding=UTF-8
-"""
+'''
 @Author: Zhao Lijun
 @LastEditors: Zhao Lijun
 @Description:
 @Date: 2019-04-22
 @LastEditTime: 2019-04-22 14:50
-"""
+'''
 import numpy as np
 import torch
 import torch.utils.data as Data
@@ -14,10 +14,9 @@ from torch.autograd import Variable
 from EvalBox.Evaluation.evaluation import Evaluation
 from EvalBox.Evaluation.evaluation import MIN_COMPENSATION
 
-
 class PSD(Evaluation):
-    def __init__(self, outputs_origin, outputs_adv, device, **kwargs):
-        """
+    def __init__(self, outputs_origin, outputs_adv,device, **kwargs):
+        '''
         @description:
         @param {
             model:
@@ -25,29 +24,20 @@ class PSD(Evaluation):
             kwargs:
         }
         @return: None
-        """
-        super(PSD, self).__init__(outputs_origin, outputs_adv, device)
+        '''
+        super(PSD, self).__init__(outputs_origin, outputs_adv,device)
 
         self._parsing_parameters(**kwargs)
 
     def _parsing_parameters(self, **kwargs):
-        """
+        '''
         @description:
         @param {
         }
         @return:
-        """
-
-    def evaluate(
-        self,
-        adv_xs=None,
-        cln_xs=None,
-        cln_ys=None,
-        adv_ys=None,
-        target_preds=None,
-        target_flag=False,
-    ):
-        """
+        '''
+    def evaluate(self,adv_xs=None, cln_xs=None, cln_ys=None,adv_ys=None,target_preds=None, target_flag=False):
+        '''
         @description:
         @param {
             adv_xs: 攻击样本
@@ -58,13 +48,13 @@ class PSD(Evaluation):
             target_flag：是否是目标攻击
         }
         @return: psd {Perturbation Sensitivity Distance}
-        """
+        '''
         total = len(adv_xs)
         print("total", total)
-        assert len(adv_xs) == len(cln_ys), "examples and labels do not match."
+        assert len(adv_xs) == len(cln_ys), 'examples and labels do not match.'
         dist = 0
         number = 0
-        outputs = torch.from_numpy(self.outputs_adv)
+        outputs=torch.from_numpy(self.outputs_adv)
         predicts = list()
 
         preds = torch.argmax(outputs, 1)
@@ -83,29 +73,16 @@ class PSD(Evaluation):
                         image_channel = image[idx_channel]
                         pert_channel = pert[idx_channel]
 
-                        image_channel = np.pad(image_channel, 1, "reflect")
-                        pert_channel = np.pad(pert_channel, 1, "reflect")
+                        image_channel = np.pad(image_channel, 1, 'reflect')
+                        pert_channel = np.pad(pert_channel, 1, 'reflect')
 
                         for i in range(1, image_channel.shape[0] - 1):
                             for j in range(1, image_channel.shape[1] - 1):
-                                sd_value = float(
-                                    np.std(
-                                        np.array(
-                                            [
-                                                image_channel[i - 1, j - 1],
-                                                image_channel[i - 1, j],
-                                                image_channel[i - 1, j + 1],
-                                                image_channel[i, j - 1],
-                                                image_channel[i, j],
-                                                image_channel[i, j + 1],
-                                                image_channel[i + 1, j - 1],
-                                                image_channel[i + 1, j],
-                                                image_channel[i + 1, j + 1],
-                                            ]
-                                        )
-                                    )
-                                )
-                                dist += pert_channel[i, j] * sd_value
+                                sd_value=float(np.std(np.array(
+                                    [image_channel[i - 1, j - 1], image_channel[i - 1, j], image_channel[i - 1, j + 1],
+                                     image_channel[i, j - 1],image_channel[i, j], image_channel[i, j + 1],
+                                     image_channel[i + 1, j - 1],image_channel[i + 1, j],image_channel[i + 1, j + 1]])))
+                                dist += pert_channel[i, j] *sd_value
         else:
             for i in range(len(predicts)):
                 if predicts[i] == labels[i]:
@@ -117,31 +94,18 @@ class PSD(Evaluation):
                         image_channel = image[idx_channel]
                         pert_channel = pert[idx_channel]
 
-                        image_channel = np.pad(image_channel, 1, "reflect")
-                        pert_channel = np.pad(pert_channel, 1, "reflect")
+                        image_channel = np.pad(image_channel, 1, 'reflect')
+                        pert_channel = np.pad(pert_channel, 1, 'reflect')
 
                         for i in range(1, image_channel.shape[0] - 1):
                             for j in range(1, image_channel.shape[1] - 1):
-                                sd_value = float(
-                                    np.std(
-                                        np.array(
-                                            [
-                                                image_channel[i - 1, j - 1],
-                                                image_channel[i - 1, j],
-                                                image_channel[i - 1, j + 1],
-                                                image_channel[i, j - 1],
-                                                image_channel[i, j],
-                                                image_channel[i, j + 1],
-                                                image_channel[i + 1, j - 1],
-                                                image_channel[i + 1, j],
-                                                image_channel[i + 1, j + 1],
-                                            ]
-                                        )
-                                    )
-                                )
-                                dist += pert_channel[i, j] * sd_value
-        if not number == 0:
-            psd = dist / number
+                                sd_value=float(np.std(np.array(
+                                    [image_channel[i - 1, j - 1], image_channel[i - 1, j], image_channel[i - 1, j + 1],
+                                     image_channel[i, j - 1],image_channel[i, j], image_channel[i, j + 1],
+                                     image_channel[i + 1, j - 1],image_channel[i + 1, j],image_channel[i + 1, j + 1]])))
+                                dist += pert_channel[i, j] *sd_value
+        if not number==0:
+            psd = dist/number
         else:
-            psd = dist / (number + MIN_COMPENSATION)
+            psd = dist/(number+MIN_COMPENSATION)
         return psd

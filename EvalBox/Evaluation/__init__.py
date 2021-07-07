@@ -21,6 +21,7 @@ from .cacc import CACC
 from .acac import ACAC
 from .actc import ACTC
 from .aldp import ALDp
+from .asr import ASR
 from .ass import ASS
 from .nte import NTE
 from .psd import PSD

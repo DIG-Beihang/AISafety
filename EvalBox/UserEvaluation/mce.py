@@ -1,28 +1,17 @@
-#!/usr/bin/env python
-# coding=UTF-8
-'''
-@Author: Linna
-@LastEditors: Linna
-@Description:
-@Date: 2019-04-24
-@LastEditTime:
-'''
 import numpy as np
 import torch
 import torch.utils.data as Data
 from torch.autograd import Variable
-from EvalBox.Evaluation.acc import ACC
-#import pyguetzli
-from PIL import Image
-import zlib
-import os,sys
 from EvalBox.Evaluation.evaluation_defense import Evaluation_Defense
+from EvalBox.Evaluation.acc import ACC
 from EvalBox.Evaluation.evaluation import MIN_COMPENSATION
-
-class CSR(Evaluation_Defense):
+class MCE(Evaluation_Defense):
     def __init__(self, outputs_origin,outputs_adv, defense_outputs_origin,defense_outputs_adv,device, **kwargs):
         '''
         @description:
+            在参数设置时应注意 
+                1. IS_COMPARE_MODEL为True
+                2. IS_PYTHORCH 为False
         @param {
             model:
             device:
@@ -30,8 +19,10 @@ class CSR(Evaluation_Defense):
         }
         @return: None
         '''
-        super(CSR, self).__init__(outputs_origin,outputs_adv, defense_outputs_origin,defense_outputs_adv,device)
+        super(MCE, self).__init__(outputs_origin,outputs_adv, defense_outputs_origin,defense_outputs_adv,device)
+
         self._parsing_parameters(**kwargs)
+
     def _parsing_parameters(self, **kwargs):
         '''
         @description:
@@ -40,7 +31,9 @@ class CSR(Evaluation_Defense):
         }
         @return:
         '''
-    def  evaluate(self,adv_xs=None, cln_xs=None, cln_ys=None,adv_ys=None,target_preds=None, target_flag=False):
+        pass
+
+    def evaluate(self,adv_xs=None, cln_xs=None, cln_ys=None,adv_ys=None,target_preds=None, target_flag=False):
         '''
         @description:
         @param {
@@ -51,17 +44,19 @@ class CSR(Evaluation_Defense):
             target_preds： 目标攻击下希望原始样本攻击的目标类别
             target_flag：是否是目标攻击
         }
-        @return: CRR,CSR {accuracy rate}
+        @return: mCE
         '''
         total = len(adv_xs)
-        print("total", total)
-        number_count=0
-        number_defense_success_success,number_defense_success_fail,\
-        number_defense_fail_success,number_defense_fail_fail=self.ACCfilter(self.outputs_adv,self.defense_outputs_adv,target_preds, target_flag)
-        number_count =number_defense_fail_success
-        if not total==0:
-            acc_CSR=(number_count)/total
-        else:
-            acc_CSR = (number_count) / (total+MIN_COMPENSATION)
+        # 作为Base线的模型
+        mce_eval_origin = ACC(self.outputs_origin, self.outputs_adv, self.device)
+        rst_Origin = 1 - mce_eval_origin.evaluate(adv_xs, cln_xs, cln_ys, adv_ys, target_preds, target_flag)
 
-        return acc_CSR
+        # 用户模型
+        mce_eval_Defense = ACC(self.defense_outputs_origin,self.defense_outputs_adv,self.device)
+        rst_Defense = 1 - mce_eval_Defense.evaluate(adv_xs, cln_xs, cln_ys, adv_ys, target_preds, target_flag)
+        
+        if rst_Origin != 0:
+            mce = rst_Defense / rst_Origin
+        else:
+            mce = rst_Defense / (rst_Origin + MIN_COMPENSATION)
+        return mce

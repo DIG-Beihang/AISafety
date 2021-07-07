@@ -14,7 +14,7 @@ from torch.autograd import Variable
 from EvalBox.Evaluation.evaluation import Evaluation
 from EvalBox.Evaluation.evaluation import MIN_COMPENSATION
 
-class BD(Evaluation):
+class WBD(Evaluation):
 
     def __init__(self, outputs_origin, outputs_adv, device, model=None, **kwargs):
         '''
@@ -27,7 +27,7 @@ class BD(Evaluation):
         @return: None
         '''
         self.model = model
-        super(BD, self).__init__(outputs_origin, outputs_adv,device)
+        super(WBD, self).__init__(outputs_origin, outputs_adv,device)
 
         self._parsing_parameters(**kwargs)
 
@@ -76,7 +76,6 @@ class BD(Evaluation):
         device = self.device
         var_x = Variable(x.float().to(device))
         var_y = Variable(y.to(device,dtype=torch.int64))
-        it=0
         margin_list = []
         C, H, W = x.shape[1:]
         for dir in directions:
@@ -88,13 +87,9 @@ class BD(Evaluation):
             pred = torch.argmax(output, 1)
             if((pred != var_y).data.sum().item() == 0):
                 margin_list.append(255)
-                it=it+1
             else:
-
                 ind = torch.argmax(((pred != var_y) + 0), 0)
                 margin_list.append(int(init_mags[ind]))
-                #print(ind,pred, var_y)
-        #print(it,margin_list)
         return max(margin_list)
 
     def evaluate(self,adv_xs=None, cln_xs=None, cln_ys=None,adv_ys=None,target_preds=None, target_flag=False):
@@ -119,10 +114,14 @@ class BD(Evaluation):
         vectors = self._orthogonal_vectors(C * H * W, 10)
         directions = torch.from_numpy(vectors).float().to(device)
         mags = torch.from_numpy(mags).float().to(device).view(-1, 1, 1, 1)
+        
 
         distance = 0
+        image_rst_list = []
         for i in range(N):
-            distance += self._measure_one_image(adv_xs[i:i+1], cln_ys[i:i+1], directions, mags, init_mags)
+            rst = self._measure_one_image(adv_xs[i:i+1], cln_ys[i:i+1], directions, mags, init_mags)
+            distance += rst
+
         if not N==0:
             wbd = distance / N
         else:

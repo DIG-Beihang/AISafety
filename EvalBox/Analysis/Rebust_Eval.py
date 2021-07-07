@@ -16,12 +16,13 @@ from torchvision import utils as vutils
 sys.path.append('{}/../'.format(os.path.dirname(os.path.realpath(__file__))))
 from EvalBox.Analysis.evaluation_base import Evaluation_Base
 from EvalBox.Evaluation import *
+from EvalBox.UserEvaluation import *
 from EvalBox.Attack import *
 from utils.file_utils import read_dict_from_file
 from torchvision.models import *
 from EvalBox.Analysis.grand_CAM import *
 from utils.file_utils import get_user_model, get_user_model_origin
-from utils.io_utils import mkdir, get_label_lines, convertlist_to_numpy,\
+from utils.io_utils import mkdir, get_label_lines, convertlist_to_numpy, \
     gen_attack_adv_save_path, save_json, read_json, load_json, analyze_json, output_value, dict_list_to_np
 from utils.Attack_utils import *
 from utils.io_utils import mkdir, get_label_lines, get_image_from_path
@@ -44,9 +45,9 @@ def show_bar_figure(attName, modelname, data_type, dict, adv_outputs, origin_out
     plt.rcParams['savefig.dpi'] = 300 #图片像素
 
     if "ImageNet" in data_type:
-        plt.xticks(fontsize=4)
-        plt.figure(figsize=(16, 12))
-        plt.xticks(rotation=-25)
+        plt.xticks(fontsize = 4)
+        plt.figure(figsize = (16, 12))
+        plt.xticks(rotation = -25)
         for i in range(top_k):
             ratiox = softmaxsort_adv.data.cpu().numpy()[length - 1 - i]
             ratiox_oric = softmaxsort_oric.data.cpu().numpy()[length - 1 - i]
@@ -58,7 +59,7 @@ def show_bar_figure(attName, modelname, data_type, dict, adv_outputs, origin_out
             value_ratioy = softmax_oric.data.cpu().numpy()[ratiox_oric]
             y2.append(value_ratioy)
     else:
-        plt.xticks(fontsize=10)
+        plt.xticks(fontsize = 10)
         for i in range(top_k):
             ratiox = softmaxsort_adv.data.cpu().numpy()[length - 1 - i]
             ratiox_oric = softmaxsort_oric.data.cpu().numpy()[length - 1 - i]
@@ -76,7 +77,7 @@ def show_bar_figure(attName, modelname, data_type, dict, adv_outputs, origin_out
     plt.savefig(path + "top_" + str(top_k) + "_" + str(index) + "_" + attName +"_"+modelname+ "_"+datatype + ".jpg")
 
 #保存对抗样本和标签，原始样本和对应标签
-def save_adv_result(adv_xs, adv_labels_numpy, class_num,\
+def save_adv_result(adv_xs, adv_labels_numpy, class_num, \
                         device, attack_method, data_type, save_as_black_path, label_path, save_method, args_Attack_param):
     save_as_black_path = gen_attack_adv_save_path(save_as_black_path, args_Attack_param)
     mkdir(save_as_black_path)
@@ -85,7 +86,7 @@ def save_adv_result(adv_xs, adv_labels_numpy, class_num,\
     path_adv_xs_json = []
     path_adv_ys_json = []
     # 保存生成的攻击样
-    if data_type == 'cifar10' or data_type == "cifar100" or save_method==".npy":
+    if data_type == 'cifar10' or data_type == "cifar100" or save_method == ".npy":
         print('saving adv samples...')
         np.save(save_as_black_path + '/{}_{}_advs.npy'.format(attack_method, adv_xs.shape[0]), np.array(adv_xs))
         path_adv_xs = save_as_black_path + '/{}_{}_advs.npy'.format(attack_method, adv_xs.shape[0])
@@ -106,7 +107,7 @@ def save_adv_result(adv_xs, adv_labels_numpy, class_num,\
     else:
         # 保存成图片方式
         # 原始的一些图片和label信息
-        print(label_path,"Saving in Image Model")
+        print(label_path, "Saving in Image Model")
         image_names, label_list, number = get_label_lines(label_path)
         val_temp_path_name = "/Image/"
         image_temp_path_name = "/Image/Adv_Images/"
@@ -136,30 +137,31 @@ def save_numpy(inputs, path, discrube):
         np.save(path + '/{}_{}_outputs.npy'.format("black_predict_" + discrube, inputs.shape[0]), np.array(inputs))
 
 class Rebust_Attack(Evaluation_Base):
-    def __init__(self, attack_method = None, sample_path = None, label_path = None, image_origin_path = None, label_origin_path = None,
-                 gpu_counts = None, gpu_indexs = None, seed = None, Scale_ImageSize = None, Crop_ImageSize = None,
-                 model = None, model_dir = None, defense_model = None, model_defence_dir = None, data_type = None, IS_WHITE = None,
-        IS_SAVE = None, IS_COMPARE_MODEL = None, IS_TARGETTED = None, save_path = None, save_method = None, black_Result_dir = None, batch_size = None):
+    def __init__(self, attack_method = None, sample_path = None, label_path = None, image_origin_path = None, label_origin_path = None, 
+                 gpu_counts = None, gpu_indexs = None, seed = None, Scale_ImageSize = None, Crop_ImageSize = None, 
+                 model = None, model_dir = None, defense_model = None, model_defense_dir = None, data_type = None, IS_WHITE = None, 
+                 IS_SAVE = None, IS_COMPARE_MODEL = None, IS_TARGETTED = None, save_path = None, save_method = None, black_Result_dir = None, batch_size = None):
         self._parse_params()
         self.defense_model_name = defense_model  # 'resnet20_cifar')
         self.model_name = model  # 'resnet20_cifar')
         self.data_type = data_type  # 'cifar10')
         self.model_dir = model_dir  # '../Models/TestModel/resnet20_cifar.pt')
-        self.model_defence_dir = model_defence_dir  # '../Models/TestModel/resnet20_cifar.pt')
+        self.model_defense_dir = model_defense_dir  # '../Models/TestModel/resnet20_cifar.pt')
         self.IS_WHITE = IS_WHITE  # True)
         self.IS_SAVE = IS_SAVE  # False)
         self.IS_COMPARE_MODEL = IS_COMPARE_MODEL  # True)
         self.IS_TARGETTED = IS_TARGETTED  # False)
         self.batch_size = batch_size  # 64)
-        self.Scale_ImageSize =Scale_ImageSize
+        self.Scale_ImageSize = Scale_ImageSize
         self.Crop_ImageSize = Crop_ImageSize
         self.save_as_black_path = save_path
         self.save_method = save_method
         self.black_Result_dir = black_Result_dir
-        super(Rebust_Attack, self).__init__(attack_method, sample_path, label_path, image_origin_path, label_origin_path,
-                                          gpu_counts, gpu_indexs, seed, Scale_ImageSize, Crop_ImageSize,\
-                                            model, model_dir, defense_model, model_defence_dir, data_type, IS_WHITE,\
-                              IS_SAVE, IS_COMPARE_MODEL, IS_TARGETTED, save_path, save_method, black_Result_dir, batch_size)  # some model that in different setting
+        super(Rebust_Attack, self).__init__(attack_method, sample_path, label_path, image_origin_path, label_origin_path, 
+                                            gpu_counts, gpu_indexs, seed, Scale_ImageSize, Crop_ImageSize, \
+                                            model, model_dir, defense_model, model_defense_dir, data_type, IS_WHITE, \
+                                            IS_SAVE, IS_COMPARE_MODEL, IS_TARGETTED, save_path, save_method, \
+                                            black_Result_dir, batch_size)  # some model that in different setting
 
 
     def _parse_params(self):
@@ -184,14 +186,14 @@ class Rebust_Attack(Evaluation_Base):
         origin_xs = self.get_origin_data(self.device, self.dataloader_origin)
         origin_xs_numpy = np.array(origin_xs)
         xs = torch.from_numpy(origin_xs_numpy)
-        model = self.setting_model(self.model_dir, self.model_name, self.device)
+        model = self.setting_model(self.model_dir, self.model_name, self.device, "origin")
         origin_outputs = self.outputs_eval(model, self.device, xs)
         return origin_outputs
     def gen_origin_defense_Result(self):
         origin_xs = self.get_origin_data(self.device, self.dataloader_origin)
         origin_xs_numpy = np.array(origin_xs)
         xs = torch.from_numpy(origin_xs_numpy)
-        model_Defense = self.setting_model(self.model_defence_dir, self.defense_model_name, self.device)
+        model_Defense = self.setting_model(self.model_defense_dir, self.defense_model_name, self.device, "defense")
         origin_outputs = self.outputs_eval(model_Defense, self.device, xs)
         return origin_outputs
     def gen_Attack_Origin_Result(self):
@@ -199,7 +201,7 @@ class Rebust_Attack(Evaluation_Base):
         if not self.IS_COMPARE_MODEL:
             black_origin_outputs = self.gen_origin_Result()
         else:
-            black_origin_outputs= self.gen_origin_Result()
+            black_origin_outputs = self.gen_origin_Result()
             black_defense_origin_outputs = self.gen_origin_defense_Result()
         return black_origin_outputs, black_defense_origin_outputs
     def get_origin_data(self, device, dataloader):
@@ -211,14 +213,13 @@ class Rebust_Attack(Evaluation_Base):
         adv_outputs = self.outputs_eval(self.model, device, adv_xs)
         adv_outputs_numpy = np.array(adv_outputs)
         #防御模型需要的结果
-        model_Defense = self.setting_model(self.model_defence_dir, self.defense_model_name, device)
-        self.model_Defense = model_Defense
+        model_Defense = self.setting_model(self.model_defense_dir, self.defense_model_name, device, "defense")
         defense_adv_outputs_numpy = self.outputs_eval(model_Defense, device, adv_xs)
         return adv_outputs_numpy, defense_adv_outputs_numpy
     def estimate_Attack_uncompare(self, device, adv_samples_numpy):
         adv_xs = torch.from_numpy(adv_samples_numpy)
         #模型每次预测的时候需要再局部变量加载和设置
-        model = self.get_model(self.model_dir, self.model_name, device)
+        model = self.setting_model(self.model_dir, self.model_name, device, "origin")
         adv_outputs = self.outputs_eval(model, device, adv_xs)
         adv_outputs_numpy = np.array(adv_outputs)
         return  adv_outputs_numpy
@@ -245,17 +246,17 @@ class Rebust_Attack(Evaluation_Base):
         CD_dict = str(dict_name).split(".")[0]
         #print(CD_dict)
         if self.IS_COMPARE_MODEL:
-            black_outputs_path =self.black_Result_dir
+            black_outputs_path = self.black_Result_dir
             json_content = load_json(black_outputs_path)
             analyze_json(json_content)
-            model_content= output_value(json_content,"model")
+            model_content = output_value(json_content, "model")
             model_BDResult = output_value(model_content, "BDResult")
             model_CDResult = output_value(model_content, "CDResult")
             model_CDResult_dict = output_value(model_CDResult, CD_dict)
             black_origin_outputs = dict_list_to_np(model_BDResult)
             black_adv_outputs = dict_list_to_np(model_CDResult_dict)
 
-            model_defense_content= output_value(json_content,"compare_model")
+            model_defense_content = output_value(json_content, "compare_model")
             model_defense_BDResult = output_value(model_defense_content, "BDResult")
             model_defense_CDResult = output_value(model_defense_content, "CDResult")
             model_defense_CDResult_dict = output_value(model_defense_CDResult, CD_dict)
@@ -267,7 +268,7 @@ class Rebust_Attack(Evaluation_Base):
             black_outputs_path = self.black_Result_dir
             json_content = load_json(black_outputs_path)
             analyze_json(json_content)
-            model_content= output_value(json_content,"model")
+            model_content = output_value(json_content, "model")
             model_BDResult = output_value(model_content, "BDResult")
             model_CDResult = output_value(model_content, "CDResult")
             model_CDResult_dict = output_value(model_CDResult, CD_dict)
@@ -280,7 +281,6 @@ class Rebust_Attack(Evaluation_Base):
         model_dir = self.model_dir
         #这里用的是我们自己已经准备的一些已知网络结构的模型
         device, model, att, att_name = self.setting_device(model_dir, self.model_name)
-        
 #         model = self.get_model(model_dir, self.model_name, device)
         dataloader, dataset = self.setting_dataset(self.Scale_ImageSize, self.sample_path, self.label_path)
         dataloader_origin, dataset_origin = self.setting_dataset(self.Scale_ImageSize, self.image_origin_path, self.label_origin_path)
@@ -307,13 +307,13 @@ class Rebust_Attack(Evaluation_Base):
         adv_preds = self.preds_eval(model, device, adv_xs)
         #攻击后经过模型计算出来的类别
         adv_labels_numpy = np.array(adv_preds).astype(int)
-        #保存生成的攻击样本,原始的不动，在别的地方单独保存，减少重复计算
+        #保存生成的攻击样本, 原始的不动，在别的地方单独保存，减少重复计算
         if IS_SAVE:
-           self.path_adv_xs, self.path_adv_ys, self.path_adv_xs_json, self.path_adv_ys_json = save_adv_result(adv_xs, adv_labels_numpy, class_num_type, device,\
+           self.path_adv_xs, self.path_adv_ys, self.path_adv_xs_json, self.path_adv_ys_json = save_adv_result(adv_xs, adv_labels_numpy, class_num_type, device, \
            self.attack_method[0], self.data_type, self.save_as_black_path, self.label_path, self.save_method, self.attack_method[2])
         self.gen_adv_save_result()
         #   对抗样本             原始样本      原始标签-groundtruth  对对抗样本预测的标签    如果目标攻击的目标标签    是否是目标非目标
-        return adv_samples_numpy#, adv_samples_numpy.shape#, device, dataloader, dataloader_origin, att #该网络下对原始样本预测概率值,对抗样本预测概率值（numpy格式）
+        return adv_samples_numpy#, adv_samples_numpy.shape#, device, dataloader, dataloader_origin, att #该网络下对原始样本预测概率值, 对抗样本预测概率值（numpy格式）
     def gen_adv_save_result(self):
         path_adv_xs = self.path_adv_xs
         path_adv_ys = self.path_adv_ys
@@ -328,31 +328,31 @@ class Rebust_Attack(Evaluation_Base):
         return path_adv_xs, path_adv_ys, path_adv_xs_json, path_adv_ys_json
 
 class Rebust_Evaluate(object):
-    def __init__(self, adv_xs= None, cln_xs= None, cln_ys= None, adv_ys= None, target_pred= None, device = None,\
-                 outputs_origin= None, outputs_adv= None, defense_outputs_origin = None, defense_outputs_adv = None\
+    def __init__(self, adv_xs = None, cln_xs = None, cln_ys = None, adv_ys = None, target_pred = None, device = None, \
+                 outputs_origin = None, outputs_adv = None, defense_outputs_origin = None, defense_outputs_adv = None\
                  , evaluation_method = None, IS_PYTHORCH_WHITE = None, IS_COMPARE_MODEL = None, IS_TARGETTED = None):
 
-            self.evaluation_method = evaluation_method
-            self.IS_PYTHORCH_WHITE = IS_PYTHORCH_WHITE
-            self.IS_COMPARE_MODEL = IS_COMPARE_MODEL  # True)
-            self.IS_TARGETTED = IS_TARGETTED  # False)
-            self._parse_params()
-            self.device = device
-            self.adv_xs = adv_xs
-            self.cln_xs = cln_xs
-            self.cln_ys = cln_ys
-            self.adv_ys = adv_ys
-            self.target_pred = target_pred
+        self.evaluation_method = evaluation_method
+        self.IS_PYTHORCH_WHITE = IS_PYTHORCH_WHITE
+        self.IS_COMPARE_MODEL = IS_COMPARE_MODEL  # True)
+        self.IS_TARGETTED = IS_TARGETTED  # False)
+        self._parse_params()
+        self.device = device
+        self.adv_xs = adv_xs
+        self.cln_xs = cln_xs
+        self.cln_ys = cln_ys
+        self.adv_ys = adv_ys
+        self.target_pred = target_pred
 
     def _parse_params(self):
-            self.model = None  # 自己生成对抗样本的原模型
-            self.model_Defense = None  # 比较模式下面，自己生成对抗样本的防御模型
+        self.model = None  # 自己生成对抗样本的原模型
+        self.model_Defense = None  # 比较模式下面，自己生成对抗样本的防御模型
     def get_models(self, model, model_defense):
         self.model = model
         self.model_Defense = model_defense
         return self.model, self.model_Defense
 #黑盒模型预测后会得到这个  outputs_origin, outputs_defense
-    def gen_evaluate(self, outputs_origin, outputs_adv,
+    def gen_evaluate(self, outputs_origin, outputs_adv, 
         defense_outputs_origin = None, defense_outputs_adv = None):
         acac_eval_origin = None
         device = self.device
@@ -364,12 +364,12 @@ class Rebust_Evaluate(object):
 
         IS_TARGETTED = self.IS_TARGETTED
         print("IS_COMPARE_MODEL", self.IS_COMPARE_MODEL)
-        if self.IS_PYTHORCH_WHITE == True:
+        if self.IS_PYTHORCH_WHITE:
             print("IS_PYTHORCH_WHITE", self.IS_PYTHORCH_WHITE)
             if self.IS_COMPARE_MODEL:
                 E_instance = eval(self.evaluation_method)
-                acac_eval_origin, eva_name_origin = E_instance(outputs_origin, outputs_adv, defense_outputs_origin,
-                                                               defense_outputs_adv, device, self.model, self.model_Defence), self.evaluation_method
+                acac_eval_origin, eva_name_origin = E_instance(outputs_origin, outputs_adv, defense_outputs_origin, 
+                                                               defense_outputs_adv, device, self.model, self.model_defense), self.evaluation_method
                 rst = acac_eval_origin.evaluate(adv_xs, cln_xs, cln_ys, adv_ys, target_pred, IS_TARGETTED)
                 return rst
             else:
@@ -379,20 +379,20 @@ class Rebust_Evaluate(object):
                 return rst
         else:
              # 比较方式下的初始化，非局部变量
-             if self.IS_COMPARE_MODEL:
-                 E_instance = eval(self.evaluation_method)
-                 acac_eval_origin, eva_name_origin = E_instance(outputs_origin, outputs_adv, defense_outputs_origin, defense_outputs_adv, device), self.evaluation_method
-                 rst = acac_eval_origin.evaluate(adv_xs, cln_xs, cln_ys, adv_ys, target_pred, IS_TARGETTED)
-                 return rst
-             else:
-                 E_instance = eval(str(self.evaluation_method))
-                 acac_eval, eva_name = E_instance(outputs_origin, outputs_adv, device), self.evaluation_method
-                 rst = acac_eval.evaluate(adv_xs, cln_xs, cln_ys, adv_ys, target_pred, IS_TARGETTED)
-                 return rst
+            if self.IS_COMPARE_MODEL:
+                E_instance = eval(self.evaluation_method)
+                acac_eval_origin, eva_name_origin = E_instance(outputs_origin, outputs_adv, defense_outputs_origin, defense_outputs_adv, device), self.evaluation_method
+                rst = acac_eval_origin.evaluate(adv_xs, cln_xs, cln_ys, adv_ys, target_pred, IS_TARGETTED)
+                return rst
+            else:
+                E_instance = eval(str(self.evaluation_method))
+                acac_eval, eva_name = E_instance(outputs_origin, outputs_adv, device), self.evaluation_method
+                rst = acac_eval.evaluate(adv_xs, cln_xs, cln_ys, adv_ys, target_pred, IS_TARGETTED)
+                return rst
 
 class Rebust_Visual(object):
     def __init__(self, attName, modelname, dict, adv_outputs, origin_outputs, path, topk_number, datatype, topk_list):
-        self.attName,=attName
+        self.attName, = attName
         self.modelname = modelname
         self.dict = dict
         self.adv_outputs = adv_outputs
@@ -409,16 +409,16 @@ class Rebust_Visual(object):
         path = self.path
         topk_number = self.topk_number
         datatype = self.datatype
-        if self.topk_list == None:
+        if self.topk_list is None:
             for i in range(topk_number):
                 show_bar_figure(attName, self.modelname, self.datatype, dict, adv_outputs, origin_outputs, path, i, datatype)
         else:
             for index in self.topk_list:
                 show_bar_figure(attName, self.modelname, self.datatype, dict, adv_outputs, origin_outputs, path, int(index), datatype)
 
-def save_cam_result(image_origin_path, i, Crop_ImageSize, adv_xs_npy, device,\
-                    model, CAM_layer, CAM_path, CAM_pathAttack, model_name, IS_COMPARE_MODEL\
-                   , defense_model, defense_model_name):
+def save_cam_result(image_origin_path, i, Crop_ImageSize, adv_xs_npy, device, \
+                    model, CAM_layer, CAM_path, CAM_pathAttack, model_name, IS_COMPARE_MODEL, \
+                    defense_model, defense_model_name):
     image, imgcv = get_image_from_path(image_origin_path, i, Crop_ImageSize, Crop_ImageSize)
     image_in = image
     imgcv_in = imgcv
@@ -432,19 +432,19 @@ def save_cam_result(image_origin_path, i, Crop_ImageSize, adv_xs_npy, device,\
     get_CAM_ImageList(image_in, imgcv_in, model, use_cuda, CAM_layer, CAM_path + model_name + "_", i)
     get_CAM_ImageList(adv_image, imgcv_in, model, use_cuda, CAM_layer, CAM_pathAttack + model_name + "_", i)
     if IS_COMPARE_MODEL:
-        get_CAM_ImageList(image_in, imgcv_in, defense_model, use_cuda, CAM_layer, CAM_path + defense_model_name + "_",
+        get_CAM_ImageList(image_in, imgcv_in, defense_model, use_cuda, CAM_layer, CAM_path + defense_model_name + "_", 
                           i)
-        get_CAM_ImageList(adv_image, imgcv_in, defense_model, use_cuda, CAM_layer,
+        get_CAM_ImageList(adv_image, imgcv_in, defense_model, use_cuda, CAM_layer, 
                           CAM_pathAttack + defense_model_name + "_", i)
 
 
 
-def Save_Eval_Visualization_Result(attName, data_type, file_name, Dict_path, device, adv_xs_npy, save_base_path,\
-                                   IS_COMPARE_MODEL, model_name, defense_model_name = None,\
-                                   model = None, defense_model = None, CAM_layer=28,\
-                                   image_origin_path = None, label_path = None,\
-                                   black_adv_outputs = None, black_origin_outputs = None,\
-                                    black_defense_adv_outputs = None, black_defense_origin_outputs = None, topk_show_list = None):
+def Save_Eval_Visualization_Result(attName, data_type, file_name, Dict_path, device, adv_xs_npy, save_base_path, \
+                                   IS_COMPARE_MODEL, model_name, defense_model_name = None, \
+                                   model = None, defense_model = None, CAM_layer = 28, \
+                                   image_origin_path = None, label_path = None, \
+                                   black_adv_outputs = None, black_origin_outputs = None, \
+                                   black_defense_adv_outputs = None, black_defense_origin_outputs = None, topk_show_list = None):
     dict_path = Dict_path
     dict_meta_batch = read_dict_from_file(dict_path)
     if 'ImageNet' in data_type:
@@ -470,36 +470,35 @@ def Save_Eval_Visualization_Result(attName, data_type, file_name, Dict_path, dev
 
         Crop_ImageSize = (224, 224)
         #print(topk_show_list)
-        if topk_show_list == None:
+        if topk_show_list is None:
             for i in range(paths_number):
                 save_cam_result(image_origin_path, i, Crop_ImageSize, adv_xs_npy, device, \
-                                model, CAM_layer, CAM_path, CAM_pathAttack, model_name, IS_COMPARE_MODEL \
-                                , defense_model, defense_model_name)
-
+                                model, CAM_layer, CAM_path, CAM_pathAttack, model_name, IS_COMPARE_MODEL, \
+                                defense_model, defense_model_name)
         else:
             for index in topk_show_list:
                 save_cam_result(image_origin_path, int(index), Crop_ImageSize, adv_xs_npy, device, \
-                                model, CAM_layer, CAM_path, CAM_pathAttack, model_name, IS_COMPARE_MODEL \
-                                , defense_model, defense_model_name)
+                                model, CAM_layer, CAM_path, CAM_pathAttack, model_name, IS_COMPARE_MODEL, \
+                                defense_model, defense_model_name)
     elif 'cifar10' in data_type:
         topk_number = int(adv_xs_npy.shape[0] * 0.5)
         adv_outputs = torch.from_numpy(black_adv_outputs)
         origin_outputs = torch.from_numpy(black_origin_outputs)
         # 展示的分类概率的数目
         path_index = file_name.split(".")[0]
-        base_path = save_base_path + "/"+str(attName[0])+"/" + path_index
+        base_path = save_base_path + "/"+str(attName[0]) + "/" + path_index
         mkdir(base_path)
         topk_path = base_path + "/topk/"
         mkdir(topk_path)
-        r_v = Rebust_Visual(attName, model_name, dict_meta_batch, adv_outputs, origin_outputs,
+        r_v = Rebust_Visual(attName, model_name, dict_meta_batch, adv_outputs, origin_outputs, 
                             topk_path, topk_number, data_type, topk_show_list)
         r_v.gen_visualization()
         if IS_COMPARE_MODEL:
             topk_defense_number = int(adv_xs_npy.shape[0] * 0.5)
             adv_defense_outputs = torch.from_numpy(black_defense_adv_outputs)
             origin_defense_outputs = torch.from_numpy(black_defense_origin_outputs)
-            r_v_defense = Rebust_Visual(attName, defense_model_name, dict_meta_batch, adv_defense_outputs,
-                                        origin_defense_outputs,
+            r_v_defense = Rebust_Visual(attName, defense_model_name, dict_meta_batch, adv_defense_outputs, 
+                                        origin_defense_outputs, 
                                         topk_path, topk_defense_number, data_type, topk_show_list)
             r_v_defense.gen_visualization()
     else:
@@ -512,13 +511,13 @@ def Save_Eval_Visualization_Result(attName, data_type, file_name, Dict_path, dev
         mkdir(base_path)
         topk_path = base_path + "/topk/"
         mkdir(topk_path)
-        r_v = Rebust_Visual(attName, model_name, dict_meta_batch, adv_outputs, origin_outputs,
+        r_v = Rebust_Visual(attName, model_name, dict_meta_batch, adv_outputs, origin_outputs, 
                             topk_path, topk_number, data_type, topk_show_list)
         r_v.gen_visualization()
         if IS_COMPARE_MODEL:
             topk_defense_number = int(adv_xs_npy.shape[0] * 0.5)
             adv_defense_outputs = torch.from_numpy(black_defense_adv_outputs)
             origin_defense_outputs = torch.from_numpy(black_defense_origin_outputs)
-            r_v_defense = Rebust_Visual(attName, defense_model_name, dict_meta_batch, adv_defense_outputs,
+            r_v_defense = Rebust_Visual(attName, defense_model_name, dict_meta_batch, adv_defense_outputs, 
                                         origin_defense_outputs, topk_path, topk_defense_number, data_type, topk_show_list)
             r_v_defense.gen_visualization()
