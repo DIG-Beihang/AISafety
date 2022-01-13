@@ -1,0 +1,1 @@
+We support two types of config file. `.py` and `.yml`(`.yaml`)
