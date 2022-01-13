@@ -280,7 +280,7 @@ class Rebust_Attack(Evaluation_Base):
     def gen_attack_Samples(self):
         model_dir = self.model_dir
         #这里用的是我们自己已经准备的一些已知网络结构的模型
-        device, model, att, att_name = self.setting_device(model_dir, self.model_name)
+        device, model, att, att_name = self.setting_device_by_conf(model_dir, self.model_name)
 #         model = self.get_model(model_dir, self.model_name, device)
         dataloader, dataset = self.setting_dataset(self.Scale_ImageSize, self.sample_path, self.label_path)
         dataloader_origin, dataset_origin = self.setting_dataset(self.Scale_ImageSize, self.image_origin_path, self.label_origin_path)
@@ -392,7 +392,7 @@ class Rebust_Evaluate(object):
 
 class Rebust_Visual(object):
     def __init__(self, attName, modelname, dict, adv_outputs, origin_outputs, path, topk_number, datatype, topk_list):
-        self.attName, = attName
+        self.attName = attName
         self.modelname = modelname
         self.dict = dict
         self.adv_outputs = adv_outputs
