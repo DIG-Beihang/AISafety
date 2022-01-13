@@ -276,7 +276,7 @@ class Evaluation_Base(object):
         dataloader = Data.DataLoader(dataset, batch_size = self.batch_size, num_workers = 0, shuffle = False)
         return  dataloader, dataset
 
-   def setting_model(self, model_dir, model_name, device, model_type = "origin"):
+    def setting_model(self, model_dir, model_name, device, model_type = "origin"):
         model = self.get_model(model_dir, model_name, device, model_type)
         return model
 

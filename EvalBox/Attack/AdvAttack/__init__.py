@@ -27,3 +27,4 @@ from .ILLC import ILLC
 from .RLLC import RLLC
 from .spsa import SPSA
 from .PA import PA
+from .daa import DualAttentionAttack
