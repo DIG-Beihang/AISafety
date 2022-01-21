@@ -57,7 +57,7 @@ def main(args):
             batch_size=cfg.datasets.batch_size,
         )
         # 获得攻击样本
-        adv_xs_npy = r_a.gen_attack_Samples()
+        adv_xs_npy = r_a.gen_attack_Samples_by_conf()
         # 获得模型对攻击样本的预测值
         adv_ys_npy = r_a.gen_Attack_Preds(adv_xs_npy)
         # 比较模式下面，defense的也有值

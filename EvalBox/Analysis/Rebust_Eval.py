@@ -280,7 +280,7 @@ class Rebust_Attack(Evaluation_Base):
     def gen_attack_Samples(self):
         model_dir = self.model_dir
         #这里用的是我们自己已经准备的一些已知网络结构的模型
-        device, model, att, att_name = self.setting_device_by_conf(model_dir, self.model_name)
+        device, model, att, att_name = self.setting_device(model_dir, self.model_name)
 #         model = self.get_model(model_dir, self.model_name, device)
         dataloader, dataset = self.setting_dataset(self.Scale_ImageSize, self.sample_path, self.label_path)
         dataloader_origin, dataset_origin = self.setting_dataset(self.Scale_ImageSize, self.image_origin_path, self.label_origin_path)
@@ -314,6 +314,50 @@ class Rebust_Attack(Evaluation_Base):
         self.gen_adv_save_result()
         #   对抗样本             原始样本      原始标签-groundtruth  对对抗样本预测的标签    如果目标攻击的目标标签    是否是目标非目标
         return adv_samples_numpy#, adv_samples_numpy.shape#, device, dataloader, dataloader_origin, att #该网络下对原始样本预测概率值, 对抗样本预测概率值（numpy格式）
+
+
+    def gen_attack_Samples_by_conf(self):
+        model_dir = self.model_dir
+        # 这里用的是我们自己已经准备的一些已知网络结构的模型
+        device, model, att, att_name = self.setting_device_by_conf(model_dir, self.model_name)
+        #         model = self.get_model(model_dir, self.model_name, device)
+        dataloader, dataset = self.setting_dataset(self.Scale_ImageSize, self.sample_path, self.label_path)
+        dataloader_origin, dataset_origin = self.setting_dataset(self.Scale_ImageSize, self.image_origin_path,
+                                                                 self.label_origin_path)
+
+        self.model = model
+        self.device = device
+        self.dataloader_origin = dataloader_origin
+        self.dataset_origin = dataset_origin
+        self.dataloader = dataloader
+        self.dataset = dataset
+        IS_TARGETTED = self.IS_TARGETTED
+        print("self.IS_SAVE", self.IS_SAVE)
+        IS_SAVE = self.IS_SAVE
+        # print('Loading the prepared  samples (nature inputs and corresponding labels) that will be attacked ...... ')
+        print("self.IS_WHITE", self.IS_WHITE)
+        if (self.IS_WHITE):
+            class_num_type, adv_samples = self.white_eval(att, model, device, dataloader)
+        else:
+            class_num_type, adv_samples = self.black_eval(model, device, dataloader)
+
+        # 攻击后的样本，黑盒下是迁移输入过来的
+        adv_samples_numpy = np.copy(np.array(adv_samples))
+        adv_xs = torch.from_numpy(np.copy(adv_samples_numpy))
+        adv_preds = self.preds_eval(model, device, adv_xs)
+        # 攻击后经过模型计算出来的类别
+        adv_labels_numpy = np.array(adv_preds).astype(int)
+        # 保存生成的攻击样本, 原始的不动，在别的地方单独保存，减少重复计算
+        if IS_SAVE:
+            self.path_adv_xs, self.path_adv_ys, self.path_adv_xs_json, self.path_adv_ys_json = save_adv_result(
+                adv_xs, adv_labels_numpy, class_num_type, device, \
+                self.attack_method[0], self.data_type, self.save_as_black_path, self.label_path, self.save_method,
+                self.attack_method[2])
+        self.gen_adv_save_result()
+        #   对抗样本             原始样本      原始标签-groundtruth  对对抗样本预测的标签    如果目标攻击的目标标签    是否是目标非目标
+        return adv_samples_numpy  # , adv_samples_numpy.shape#, device, dataloader, dataloader_origin, att #该网络下对原始样本预测概率值, 对抗样本预测概率值（numpy格式）
+
+
     def gen_adv_save_result(self):
         path_adv_xs = self.path_adv_xs
         path_adv_ys = self.path_adv_ys
