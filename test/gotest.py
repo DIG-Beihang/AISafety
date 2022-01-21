@@ -7,6 +7,7 @@ from easydict import EasyDict
 
 from EvalBox.Analysis.Rebust_Eval import Rebust_Attack, Rebust_Evaluate, Save_Eval_Visualization_Result
 from utils.config import Config
+from utils.io_utils import SaveWithJson_Result
 
 
 def main(args):
@@ -110,15 +111,15 @@ def main(args):
             )
         # log信息
         #####保存测评信息，攻击方法，评测方法和对应的结果到指定目录文件下#####
-        # SaveWithJson_Result(
-        #     cfg.result.save_visualization_base_path,
-        #     "table_list",
-        #     cfg.attack.type,
-        #     Attack_file_name=param.name,
-        #     evaluation_name=cfg.evaluation.type,
-        #     value=rst,
-        # )
-        # print("Evaluation output : ", rst)
+        SaveWithJson_Result(
+            cfg.result.save_visualization_base_path,
+            "table_list",
+            cfg.attack.type,
+            Attack_file_name=param.name,
+            evaluation_name=cfg.evaluation.type,
+            value=rst
+        )
+        print("Evaluation output : ", rst)
         #####用户可根据自己需要选择展示的是哪些，以list形式传入#####
         topk_show_list = [0, 1]
         #####展示和保存可解释性分析的结果#####
