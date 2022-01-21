@@ -1,0 +1,9 @@
+<method type='simbaAttack'>
+<param title='epsilon'>
+	<epsilon>0.1</epsilon>
+</param>
+
+<param title='max_iters'>
+	<max_iters>1000</max_iters>
+</param>
+</method>
