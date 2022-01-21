@@ -17,7 +17,7 @@ attack = dict(
 )
 defense = dict(
     model='Models.UserModel.FP_resnet',
-    path='../Models/weights/FP_ResNet20.th'
+    path='Models/weights/FP_ResNet20.th'
 )
 evaluation = dict(
     type="ACAC"
@@ -25,16 +25,16 @@ evaluation = dict(
 model = dict(
     name="ResNet20",
     path='Models.UserModel.ResNet2',
-    weights='../Models/weights/resnet20_cifar.pt'
+    weights='Models/weights/resnet20_cifar.pt'
 )
 datasets = dict(
     type='cifar10',
-    dict_path='./dict_lists/cifar10_dict.txt',
+    dict_path='test/dict_lists/cifar10_dict.txt',
     test_path=[
-        "../Datasets/CIFAR_cln_data/cifar10_30_origin_inputs.npy",
-        "../Datasets/CIFAR_cln_data/cifar10_30_origin_labels.npy",
-        "../Datasets/CIFAR_cln_data/cifar10_30_origin_inputs.npy",
-        "../Datasets/CIFAR_cln_data/cifar10_30_origin_labels.npy",
+        "Datasets/CIFAR_cln_data/cifar10_30_origin_inputs.npy",
+        "Datasets/CIFAR_cln_data/cifar10_30_origin_labels.npy",
+        "Datasets/CIFAR_cln_data/cifar10_30_origin_inputs.npy",
+        "Datasets/CIFAR_cln_data/cifar10_30_origin_labels.npy",
     ],
     augment=dict(
         Crop_ImageSize=(32, 32),
@@ -45,9 +45,9 @@ datasets = dict(
 )
 result = dict(
     IS_SAVE=False,
-    save_path='./Attack_generation/',
+    save_path='test/Attack_generation/',
     save_method='.npy',
-    save_visualization_base_path='./temp/',
+    save_visualization_base_path='test/temp/',
     black_Result_dir='..',
 )
 gpu = dict(
