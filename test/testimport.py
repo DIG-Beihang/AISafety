@@ -144,15 +144,15 @@ def main(args):
 
         # log信息
         #####保存测评信息，攻击方法，评测方法和对应的结果到指定目录文件下#####
-        # SaveWithJson_Result(
-        #     args.save_visualization_base_path,
-        #     "table_list",
-        #     attName[0],
-        #     f,
-        #     args.evaluation_method,
-        #     rst,
-        # )
-        # print("Evaluation output : ", rst)
+        SaveWithJson_Result(
+            args.save_visualization_base_path,
+            "table_list",
+            attName[0],
+            f,
+            args.evaluation_method,
+            rst
+        )
+        print("Evaluation output : ", rst)
         update_current_status(
             args.save_visualization_base_path,
             attName[0],
@@ -162,7 +162,7 @@ def main(args):
         topk_show_list = [0, 1]
         #####展示和保存可解释性分析的结果#####
         Save_Eval_Visualization_Result(
-            attName,
+            attName[0],
             args.data_type,
             f,
             args.Dict_path,

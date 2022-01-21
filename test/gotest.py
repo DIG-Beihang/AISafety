@@ -4,7 +4,6 @@ import numpy as np
 import torch
 import yaml
 from easydict import EasyDict
-from pyonize import pyonize
 
 from EvalBox.Analysis.Rebust_Eval import Rebust_Attack, Rebust_Evaluate, Save_Eval_Visualization_Result
 from utils.config import Config
