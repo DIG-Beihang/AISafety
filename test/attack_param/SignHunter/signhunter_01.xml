@@ -1,0 +1,8 @@
+<method type='signhunterAttack'>
+<param title='epsilon'>
+	<epsilon>0.1</epsilon>
+</param>
+<param title='max_queries'>
+	<max_queries>100</max_queries>
+</param>
+</method>

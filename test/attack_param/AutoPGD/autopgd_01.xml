@@ -1,0 +1,9 @@
+<method type='autopgdAttack'>
+<param title='eps'>
+	<eps>0.1</eps>
+</param>
+
+<param title='n_iter'>
+	<n_iter>100</n_iter>
+</param>
+</method>

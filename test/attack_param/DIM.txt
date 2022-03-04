@@ -1,0 +1,3 @@
+{
+    "dim_01.xml" : "default"
+}

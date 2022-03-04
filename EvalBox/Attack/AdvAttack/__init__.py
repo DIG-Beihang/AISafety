@@ -28,3 +28,14 @@ from .RLLC import RLLC
 from .spsa import SPSA
 from .PA import PA
 from .daa import DualAttentionAttack
+from .simba import SIMBA
+from .autopgd import AutoPGD
+from .signhunter import SignHunter
+from .square import Square
+from .na import NA
+from .dim import DIM
+from .nim import NIM
+from .tim import TIM
+from .signopt import SIGNOPT
+from .evolutionary import Evolutionary
+from .prgf import PRGF
