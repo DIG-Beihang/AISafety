@@ -28,5 +28,6 @@ Wand==0.5.2
 tqdm
 addict
 yapf
+regex
 pyyaml
 easydict
