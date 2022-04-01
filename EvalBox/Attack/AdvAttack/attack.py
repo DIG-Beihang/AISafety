@@ -4,6 +4,9 @@
 from abc import ABCMeta
 from abc import abstractmethod
 import torch.utils.data as Data
+import torch
+import torchvision
+import importlib
 
 class Attack(object):
     __metaclass__ = ABCMeta
@@ -37,6 +40,20 @@ class Attack(object):
             dataset = Data.TensorDataset(adv_xs, target_preds)
         data_loader = Data.DataLoader(dataset, batch_size=self.batch_size, num_workers=1)
         return  data_loader,device
+
+
+    def get_model(self,model_dir,model_name,device):
+        #使用预训练的网络，这个网络是ＩｍａｇｅＮｅｔ数据集上面的
+        #看看模型是不是默认pytorch的格式
+        if model_dir == '':
+            model = eval(model_name)(pretrained=True)
+        else :
+            module_user = importlib.import_module(model_name)
+            model = module_user.getModel()
+            model.load_state_dict(torch.load(model_dir,map_location=device))
+        model = model.eval().to(device)
+        return model
+
 
     @abstractmethod
     def generate(self):

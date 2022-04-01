@@ -4,7 +4,7 @@ from torch.autograd import Variable
 import torch.autograd as autograd
 
 from EvalBox.Attack.AdvAttack.attack import Attack
-from EvalBox.Attack.Models.resnet_cifar10 import resnet18
+from Models.resnet_cifar10 import resnet18
 
 import cv2
 from torch.nn.functional import interpolate as scale_image
