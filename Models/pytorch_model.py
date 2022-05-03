@@ -1,7 +1,7 @@
 import sys
-sys.path.append('../')
-from Models.base import AudioModel
-from utils.stft import STFT, torch_spectrogram
+#sys.path.append('../')
+from .base import AudioModel
+from ..utils.stft import STFT, torch_spectrogram
 import torch
 class PyTorchAudioModel(AudioModel):
     def __init__(self, model, decoder, device, sample_rate=16000):

@@ -98,7 +98,7 @@ class DatasetArgs:
             print(f"未指定数据集, 将加载默认数据集 {obj.dataset}")
         if obj.dataset in _BUILTIN_DATASETS:
             ds_cls = getattr(
-                importlib.import_module(f"text.Datasets.{_NAME_MAPPING[obj.dataset]}"),
+                importlib.import_module(f"AISafety.Datasets.{_NAME_MAPPING[obj.dataset]}"),
                 _BUILTIN_DATASETS[obj.dataset],
             )
         else:

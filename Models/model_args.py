@@ -79,7 +79,7 @@ class ModelArgs:
             print(f"未指定模型, 将使用默认模型 {obj.model}")
         if obj.model in _TEST_MODELS:
             model_cls = getattr(
-                importlib.import_module(f"text.Models.TestModel.{obj.model}"),
+                importlib.import_module(f"AISafety.Models.TestModel.{obj.model}"),
                 _TEST_MODELS[obj.model],
             )
         else:
@@ -89,7 +89,7 @@ class ModelArgs:
                 raise ValueError("自定义模型名称格式错误, 应该为 ``模型文件名.模型类名``")
             try:
                 model_cls = getattr(
-                    importlib.import_module(f"text.Models.UserModel.{model_file}"),
+                    importlib.import_module(f"AISafety.Models.UserModel.{model_file}"),
                     model_name,
                 )
             except Exception:
