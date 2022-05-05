@@ -651,7 +651,7 @@ def configurate_Device(seed, gpu_counts, gpu_indexs):
             np_gpu_indexs = np.array(gpu_indexs).astype(int)
             # gpu的设备号满足个数要求，但是要看看是否满足别的
             if min(np_gpu_indexs) >= 0 and max(np_gpu_indexs) < int(gpu_counts):
-                rand_index = random.randint(0, int(gpu_counts))
+                rand_index = random.randint(0, int(gpu_counts) - 1)
                 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_indexs[rand_index])
                 # for i in range(np_gpu_indexs.shape[0]):
                 #     devicename=torch.cuda.get_device_name(i)
