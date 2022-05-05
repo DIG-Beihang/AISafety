@@ -1,0 +1,88 @@
+{
+    "a2t": {
+        "max_candidates": 20,
+        "use_threshold": 0.9,
+        "max_modification_rate": 0.1,
+        "mlm": false,
+        "min_cos_sim": 0.8
+    },
+    "bae": {
+        "max_candidates": 50,
+        "use_threshold": 0.936338023
+    },
+    "bert_attack": {
+        "max_candidates": 48,
+        "max_perturb_percent": 0.4,
+        "use_threshold": 0.2
+    },
+    "checklist": {},
+    "clare": {
+        "max_candidates": 50,
+        "use_threshold": 0.7
+    },
+    "deep_word_bug": {
+        "max_edit_distance": 30,
+        "use_all_transformations": true
+    },
+    "faster_genetic": {
+        "max_candidates": 8,
+        "max_perturb_percent": 0.2,
+        "max_mse_dist": 0.5,
+        "pop_size": 60,
+        "max_iters": 20
+    },
+    "fd": {
+        "top_n": 5
+    },
+    "genetic": {
+        "max_candidates": 8,
+        "max_perturb_percent": 0.2,
+        "max_mse_dist": 0.5,
+        "pop_size": 60,
+        "max_iters": 20
+    },
+    "hotflip": {
+        "top_n": 1,
+        "beam_width": 10,
+        "min_cos_sim": 0.8,
+        "max_num_words": 2
+    },
+    "iga": {
+        "max_candidates": 50,
+        "max_perturb_percent": 0.2,
+        "max_mse_dist": 0.5,
+        "pop_size": 60,
+        "max_iters": 20
+    },
+    "input_reduction": {},
+    "kuleshov": {
+        "max_candidates": 15,
+        "max_perturb_percent": 0.5,
+        "thought_vector_thr": 0.2,
+        "gpt2_thr": 2.0,
+        "target_max_score": 0.7
+    },
+    "pruthi": {
+        "max_perturb_num": 1,
+        "min_word_len": 4
+    },
+    "pso": {
+        "max_candidates": -1,
+        "pop_size": 60,
+        "max_iters": 20
+    },
+    "pwws": {},
+    "text_bugger": {
+        "max_candidates": 5,
+        "use_threshold": 0.8
+    },
+    "text_fooler": {
+        "max_candidates": 30,
+        "use_threshold": 0.840845057,
+        "min_cos_sim": 0.5
+    },
+    "viper": {
+        "use_eces": false,
+        "dces_threshold": 20
+    }
+}
