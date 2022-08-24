@@ -13,10 +13,10 @@
 import sys
 import logging
 from abc import ABC, abstractmethod
-from typing import Iterable, NoReturn
+from typing import Iterable, NoReturn, Union
 
 from EvalBox.Attack.TextAttack.attack_result import AttackResult
-from utils.strings import ReprMixin
+from utils.strings import ReprMixin, normalize_language, LANGUAGE
 
 
 __all__ = [
@@ -29,10 +29,13 @@ class AttackLogger(ReprMixin, ABC):
 
     __name__ = "AttackLogger"
 
-    def __init__(self) -> NoReturn:
-        self._default_logger = logging.getLogger("NLPAttack")
+    def __init__(self, language: Union[str, LANGUAGE] = "zh") -> NoReturn:
+        self._default_logger = logging.getLogger("AITesting-Text")
         self._default_logger.setLevel(logging.INFO)
         self._init_stream_handler()
+
+        self._language = normalize_language(language)
+        self._class_map = None
 
     def _init_stream_handler(self) -> NoReturn:
         """ """
@@ -45,7 +48,7 @@ class AttackLogger(ReprMixin, ABC):
             return
         c_handler = logging.StreamHandler(sys.stdout)
         c_handler.setLevel(logging.INFO)
-        c_format = logging.Formatter("%(name)s - %(levelname)s -\n %(message)s")
+        c_format = logging.Formatter("%(name)s - %(levelname)s -\n%(message)s")
         c_handler.setFormatter(c_format)
         self._default_logger.addHandler(c_handler)
 

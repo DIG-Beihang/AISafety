@@ -11,19 +11,13 @@
 主要基于TextAttack的AttackLogManager进行实现
 """
 
-from typing import NoReturn, Iterable, Optional, List
+from typing import NoReturn, Iterable, Optional, List, Union
 
 import numpy as np
 
 from .csv_logger import CSVLogger
 from .txt_logger import TxtLogger
 from .adv_gen_logger import AdvGenLogger
-from EvalBox.Attack.TextAttack.attack_result import (  # noqa: F401
-    AttackResult,
-    FailedAttackResult,
-    SkippedAttackResult,
-)
-from utils.strings import ReprMixin
 from ..metrics import (  # noqa: F401
     EditDistanceMetric,
     NumQueriesMetric,
@@ -31,6 +25,17 @@ from ..metrics import (  # noqa: F401
     SuccessRate,
     UniversalSentenceEncoderMetric,
     WordsPerturbedMetric,
+)
+from EvalBox.Attack.TextAttack.attack_result import (  # noqa: F401
+    AttackResult,
+    FailedAttackResult,
+    SkippedAttackResult,
+)
+from utils.strings import (
+    ReprMixin,
+    normalize_language,
+    LANGUAGE,
+    get_str_justify_len,
 )
 
 
@@ -44,11 +49,29 @@ class AttackLogManager(ReprMixin):
 
     __name__ = "AttackLogManager"
 
-    def __init__(self, enable_advance_metrics: bool = False) -> NoReturn:
+    def __init__(
+        self,
+        language: Union[str, LANGUAGE] = "zh",
+        robust_threshold: float = 0.5,
+        enable_advance_metrics: bool = False,
+        attack_args: Optional[dict] = None,
+    ) -> NoReturn:
         """ """
+        self._language = normalize_language(language)
+        self._robust_threshold = robust_threshold
+        self._attack_args = attack_args
         self.loggers = []
         self.results = []
         self.enable_advance_metrics = enable_advance_metrics
+        self._algorithm = None
+        self._victim_model = None
+        self._dataset = None
+
+    def set_language(self, language: Union[str, LANGUAGE]) -> NoReturn:
+        """ """
+        self._language = normalize_language(language)
+        for logger in self.loggers:
+            logger.language = self._language
 
     def enable_stdout(self) -> NoReturn:
         """ """
@@ -66,18 +89,28 @@ class AttackLogManager(ReprMixin):
 
     def add_output_file(self, filename: str, color_method: str) -> NoReturn:
         self.loggers.append(
-            TxtLogger(filename=filename, color_method=color_method, stdout=False)
+            TxtLogger(
+                language=self._language,
+                filename=filename,
+                color_method=color_method,
+                stdout=False,
+            )
         )
 
     def add_output_csv(self, filename: str, color_method: str) -> NoReturn:
         self.loggers.append(
-            CSVLogger(filename=filename, color_method=color_method, stdout=False)
+            CSVLogger(
+                language=self._language,
+                filename=filename,
+                color_method=color_method,
+                stdout=False,
+            )
         )
 
     def add_adv_gen_csv(
         self, filename: Optional[str] = None, color_method: Optional[str] = None
     ) -> NoReturn:
-        self.loggers.append(AdvGenLogger(stdout=False))
+        self.loggers.append(AdvGenLogger( stdout=False))
 
     def log_result(
         self, result: AttackResult, attack_eval: "AttackEval"  # noqa: F821
@@ -121,6 +154,20 @@ class AttackLogManager(ReprMixin):
 
     def log_summary(self) -> NoReturn:
         """ """
+        # record the attack args
+        if self._attack_args is not None and len(self._attack_args) > 0:
+            max_len = (
+                max(len(key.encode("GBK")) for key in self._attack_args.keys()) + 2
+            )
+            args_rows = [
+                [(k + ":").ljust(get_str_justify_len(k + ":", max_len)), v]
+                for k, v in self._attack_args.items()
+            ]
+            if self._language == LANGUAGE.ENGLISH:
+                self.log_summary_rows(args_rows, "Attack Args", "attack_args")
+            elif self._language == LANGUAGE.CHINESE:
+                self.log_summary_rows(args_rows, "对抗攻击参数", "attack_args")
+
         total_attacks = len(self.results)
         if total_attacks == 0:
             return
@@ -171,12 +218,12 @@ class AttackLogManager(ReprMixin):
 
         # Attack success rate.
         if successful_attacks + failed_attacks == 0:
-            attack_success_rate = 0
+            _attack_success_rate = 0
         else:
-            attack_success_rate = (
+            _attack_success_rate = (
                 successful_attacks * 100.0 / (successful_attacks + failed_attacks)
             )
-        attack_success_rate = f"{attack_success_rate:.2f}%"
+        attack_success_rate = f"{_attack_success_rate:.2f}%"
 
         perturbed_word_percentages = perturbed_word_percentages[
             perturbed_word_percentages > 0
@@ -184,16 +231,34 @@ class AttackLogManager(ReprMixin):
         average_perc_words_perturbed = f"{perturbed_word_percentages.mean():.2f}%"
         average_num_words = f"{all_num_words.mean():.2f}"
 
-        summary_table_rows = [
-            ["Number of successful attacks:", str(successful_attacks)],
-            ["Number of failed attacks:", str(failed_attacks)],
-            ["Number of skipped attacks:", str(skipped_attacks)],
-            ["Original accuracy:", original_accuracy],
-            ["Accuracy under attack:", accuracy_under_attack],
-            ["Attack success rate:", attack_success_rate],
-            ["Average perturbed word %:", average_perc_words_perturbed],
-            ["Average num. words per input:", average_num_words],
-        ]
+        if self._language == LANGUAGE.ENGLISH:
+            summary_table_rows = [
+                ["Attack method:", self._algorithm or "N/A"],
+                ["Victim Model:", self._victim_model or "N/A"],
+                ["Attack Dataset:", self._dataset or "N/A"],
+                ["Number of successful attacks:", str(successful_attacks)],
+                ["Number of failed attacks:", str(failed_attacks)],
+                ["Number of skipped attacks:", str(skipped_attacks)],
+                ["Original accuracy:", original_accuracy],
+                ["Accuracy under attack:", accuracy_under_attack],
+                ["Attack success rate:", attack_success_rate],
+                ["Average perturbed word %:", average_perc_words_perturbed],
+                ["Average num. words per input:", average_num_words],
+            ]
+        elif self._language == LANGUAGE.CHINESE:
+            summary_table_rows = [
+                ["评测方法:", self._algorithm or "N/A"],
+                ["被评测模型:", self._victim_model or "N/A"],
+                ["对抗样本来源数据集:", self._dataset or "N/A"],
+                ["对抗攻击成功次数:", str(successful_attacks)],
+                ["对抗攻击失败次数:", str(failed_attacks)],
+                ["跳过对抗攻击次数:", str(skipped_attacks)],
+                ["被评测模型原始预测准确率:", original_accuracy],
+                ["被攻击后预测准确率:", accuracy_under_attack],
+                ["对抗攻击成功率:", attack_success_rate],
+                ["对抗样本平均扰动 %:", average_perc_words_perturbed],
+                ["对抗样本平均长度（词的数目）:", average_num_words],
+            ]
 
         num_queries = np.array(
             [
@@ -203,7 +268,54 @@ class AttackLogManager(ReprMixin):
             ]
         )
         avg_num_queries = f"{num_queries.mean():.2f}"
-        summary_table_rows.append(["Avg num queries:", avg_num_queries])
+        if self._language == LANGUAGE.ENGLISH:
+            summary_table_rows.append(["Avg num queries:", avg_num_queries])
+        elif self._language == LANGUAGE.CHINESE:
+            summary_table_rows.append(["单个样本平均对抗攻击次数:", avg_num_queries])
+
+        # quartiles of num_queries
+        quartiles_num_queries = np.percentile(num_queries, [25, 50, 75])
+        if self._language == LANGUAGE.ENGLISH:
+            summary_table_rows.append(
+                [
+                    "Quartiles (25%, 50%, 75%) num queries:",
+                    ", ".join(f"{n:.3f}" for n in quartiles_num_queries),
+                ]
+            )
+        elif self._language == LANGUAGE.CHINESE:
+            summary_table_rows.append(
+                [
+                    "单个样本对抗攻击次数的四分位数 (25%, 50%, 75%):",
+                    ", ".join(f"{n:.3f}" for n in quartiles_num_queries),
+                ]
+            )
+
+        max_len = max(len(r[0].encode("GBK")) for r in summary_table_rows) + 1
+        summary_table_rows = [
+            [r[0].ljust(get_str_justify_len(r[0], max_len)), r[1]]
+            for r in summary_table_rows
+        ]
+
+        if self._language == LANGUAGE.ENGLISH:
+            is_robust = (
+                " not " if _attack_success_rate > 100 * self._robust_threshold else " "
+            )
+            summary_table_rows.append(
+                [
+                    f"Assessed by adv. attack recipe `{self._algorithm}`, model `{self._victim_model}` is{is_robust}robust",
+                    "",
+                ]
+            )
+        elif self._language == LANGUAGE.CHINESE:
+            is_robust = (
+                "不" if _attack_success_rate > 100 * self._robust_threshold else ""
+            )
+            summary_table_rows.append(
+                [
+                    f"在对抗攻击方法 `{self._algorithm}` 下，模型 `{self._victim_model}` {is_robust}鲁棒",
+                    "",
+                ]
+            )
 
         # if self.enable_advance_metrics:
         #     perplexity_stats = Perplexity().calculate(self.results)
@@ -225,9 +337,15 @@ class AttackLogManager(ReprMixin):
         #         ["Average Attack USE Score:", use_stats["avg_attack_use_score"]]
         #     )
 
-        self.log_summary_rows(
-            summary_table_rows, "Attack Results", "attack_results_summary"
-        )
+        if self._language == LANGUAGE.ENGLISH:
+            self.log_summary_rows(
+                summary_table_rows, "Attack Results", "attack_results_summary"
+            )
+        elif self._language == LANGUAGE.CHINESE:
+            self.log_summary_rows(
+                summary_table_rows, "对抗攻击结果", "attack_results_summary"
+            )
+
         # Show histogram of words changed.
         numbins = max(max_words_changed, 10)
         for logger in self.loggers:

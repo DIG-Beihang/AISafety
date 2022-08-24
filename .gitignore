@@ -5,3 +5,4 @@ __MACOSX__/
 .DS_Store
 
 /data/
+/log/

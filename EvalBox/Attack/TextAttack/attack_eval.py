@@ -42,6 +42,9 @@ from utils.misc import set_seed
 from utils.strings import ReprMixin, normalize_language, LANGUAGE
 
 
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+
 __all__ = [
     "AttackEval",
 ]
@@ -71,6 +74,7 @@ class AttackEval(ReprMixin):
         attack: Attack,
         dataset: NLPDataset,
         attack_args: Optional[AttackArgs] = None,
+        cli_args: Optional[dict] = None,
     ) -> NoReturn:
         """
         @param {
@@ -82,6 +86,11 @@ class AttackEval(ReprMixin):
                 Arguments for attacking the dataset.
             }
         @return: None
+
+        TODO
+        ----
+        `time_out` and `ignore_errors` are in `attack_args`,
+        remove these two arguments from member functions `attack_dataset`, etc.
         """
         self.attack = attack
         self.dataset = dataset
@@ -90,7 +99,15 @@ class AttackEval(ReprMixin):
         ), f"languages of attacker ({self.attack.language}) and dataset ({self.dataset._language}) mismatch!"
         self.language = self.attack.language
         self.attack_args = attack_args or AttackArgs()
-        self.attack_log_manager = AttackArgs.create_loggers_from_args(self.attack_args)
+        self.cli_args = cli_args or {}
+
+        self.attack_log_manager = AttackArgs.create_loggers_from_args(
+            self.attack_args, self.cli_args
+        )
+        self.attack_log_manager.set_language(self.attack.language)
+        self.attack_log_manager._algorithm = self.attack.__class__.__name__
+        self.attack_log_manager._dataset = self.dataset.__class__.__name__
+        self.attack_log_manager._victim_model = self.attack.model.__class__.__name__
 
         # This is to be set if loading from a checkpoint
         self._checkpoint = None
@@ -202,13 +219,15 @@ class AttackEval(ReprMixin):
                         warnings.warn("Ran out of samples to attack!")
                         sample_exhaustion_warned = True
             else:
-                pbar.update(1)
+                # pbar.update(1)
+                pass
 
             self.attack_log_manager.log_result(result, self)
             if not self.attack_args.disable_stdout and not self.attack_args.silent:
                 print("\n")
             num_results += 1
 
+            pbar.update(1)
             if isinstance(result, SkippedAttackResult):
                 num_skipped += 1
             if isinstance(result, (SuccessfulAttackResult, MaximizedAttackResult)):
@@ -572,6 +591,10 @@ def set_env_variables(gpu_id: Union[str, int]) -> NoReturn:
     # Fix TensorFlow GPU memory growth
     try:
         import tensorflow as tf
+
+        tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+        tf.get_logger().setLevel(logging.ERROR)
+        tf.autograph.set_verbosity(1)
 
         gpus = tf.config.experimental.list_physical_devices("GPU")
         if gpus:

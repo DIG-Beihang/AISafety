@@ -19,8 +19,9 @@ from argparse import ArgumentParser
 from typing import NoReturn, Optional, List, Union
 
 from utils.loggers import AttackLogManager
-from utils.strings import ReprMixin
+from utils.strings import ReprMixin, normalize_language, LANGUAGE
 from utils.misc import nlp_log_dir, str2bool
+from const import ATTACK_ARGS_TO_LOG
 
 
 __all__ = [
@@ -91,10 +92,10 @@ class AttackArgs(ReprMixin):
     num_examples_offset: int = 0
     attack_n: bool = False
     shuffle: bool = False
-    query_budget: Optional[int] = None
+    query_budget: Optional[int] = 80
     checkpoint_interval: Optional[int] = None
     checkpoint_dir: str = "checkpoints"
-    random_seed: int = 42
+    random_seed: Optional[int] = None
     parallel: bool = False
     num_workers_per_device: int = 1
     log_to_txt: Optional[Union[bool, str]] = True
@@ -104,26 +105,30 @@ class AttackArgs(ReprMixin):
     disable_stdout: bool = True
     silent: bool = False
     enable_advance_metrics: bool = False
+    language: Union[str, LANGUAGE] = "zh"
+    robust_threshold: float = 0.6
+    time_out: float = 5.0
+    ignore_errors: bool = True
 
     def __post_init__(self) -> NoReturn:
+        """ """
+        self.language = normalize_language(self.language)
         if self.num_successful_examples:
             self.num_examples = None
         if self.num_examples:
             assert (
-                self.num_examples >= 0 or self.num_examples == -1
-            ), "`num_examples` 必须大于等于0或者等于-1(整个数据集样本数)."
+                self.num_examples > 0 or self.num_examples == -1
+            ), "`num_examples` 必须大于0或者等于-1(整个数据集样本数)."
         if self.num_successful_examples:
-            assert (
-                self.num_successful_examples >= 0
-            ), "`num_successful_examples` 必须大于等于0."
+            assert self.num_successful_examples > 0, "`num_successful_examples` 必须大于0."
 
         if self.query_budget:
-            assert self.query_budget > 0, "`query_budget` 必须大于等于0."
+            assert self.query_budget > 0, "`query_budget` 必须大于0."
 
         if self.checkpoint_interval:
-            assert self.checkpoint_interval > 0, "`checkpoint_interval` 必须大于等于0."
+            assert self.checkpoint_interval > 0, "`checkpoint_interval` 必须大于0."
 
-        assert self.num_workers_per_device > 0, "`num_workers_per_device` 必须大于等于0."
+        assert self.num_workers_per_device > 0, "`num_workers_per_device` 必须大于0."
 
     @classmethod
     def _add_parser_args(cls, parser: ArgumentParser) -> ArgumentParser:
@@ -250,14 +255,32 @@ class AttackArgs(ReprMixin):
             default=default_obj.enable_advance_metrics,
             help="Enable calculation and display of optional advance post-hoc metrics like perplexity, USE distance, etc.",
         )
+        parser.add_argument(
+            "--robust-threshold",
+            default=default_obj.robust_threshold,
+            type=float,
+            help="Robustness threshold for adversarial perturbation.",
+        )
 
         return parser
 
     @classmethod
-    def create_loggers_from_args(cls, args: "AttackArgs") -> AttackLogManager:
+    def create_loggers_from_args(
+        cls, args: "AttackArgs", cli_args: Optional[dict] = None
+    ) -> AttackLogManager:
         """ """
         # Create logger
-        attack_log_manager = AttackLogManager()
+        if cli_args is not None:
+            attack_args = {k: cli_args[k] for k in ATTACK_ARGS_TO_LOG if k in cli_args}
+        else:
+            attack_args = {
+                k: getattr(args, k) for k in ATTACK_ARGS_TO_LOG if hasattr(args, k)
+            }
+        attack_log_manager = AttackLogManager(
+            enable_advance_metrics=False,
+            robust_threshold=args.robust_threshold,
+            attack_args=attack_args,
+        )
 
         # Get current time for file naming
         timestamp = time.strftime("%Y-%m-%d-%H-%M")

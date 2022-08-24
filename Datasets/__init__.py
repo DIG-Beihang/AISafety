@@ -15,6 +15,8 @@ from .imdb_reviews_tiny import IMDBReviewsTiny
 from .dianping_tiny import DianPingTiny
 from .jd_binary_tiny import JDBinaryTiny
 from .jd_full_tiny import JDFullTiny
+from .ifeng import Ifeng
+from .chinanews import Chinanews
 
 
 __all__ = [
@@ -25,4 +27,6 @@ __all__ = [
     "DianPingTiny",
     "JDBinaryTiny",
     "JDFullTiny",
+    "Ifeng",
+    "Chinanews",
 ]

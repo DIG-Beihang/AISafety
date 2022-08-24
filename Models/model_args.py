@@ -16,8 +16,10 @@ from dataclasses import dataclass
 from argparse import ArgumentParser
 from typing import Dict, Any
 
+import transformers
+
 from utils.strings import normalize_language, LANGUAGE
-from utils.misc import module_name
+from .hf_model import HuggingFaceNLPVictimModel
 
 
 __all__ = [
@@ -52,7 +54,7 @@ class ModelArgs:
             "-m",
             "--model",
             type=str,
-            help="被攻击模型名称",
+            help=f"""被攻击模型名称，可以自定义，也可以从下面的列表{",".join(_TEST_MODELS.keys())}中选择，如果不指定，则使用默认模型""",
             default=default_obj.model,
             dest="model",
         )
@@ -83,6 +85,14 @@ class ModelArgs:
                 importlib.import_module(f"Models.TestModel.{obj.model}"),
                 _TEST_MODELS[obj.model],
             )
+        elif obj.model.startswith("huggingface/"):
+            model_name = obj.model.startswith("huggingface/", "")
+            model = transformers.AutoModelForSequenceClassification.from_pretrained(
+                model_name
+            )
+            tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
+            model = HuggingFaceNLPVictimModel(model, tokenizer)
+            return model
         else:
             try:
                 model_file, model_name = obj.model.split(".")

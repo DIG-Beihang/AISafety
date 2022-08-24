@@ -1,0 +1,25 @@
+# 对抗攻击数据集, 从以下内置数据集任选一个: amazon,dianping,imdb,jd_binary,jd_full,sst,ifeng,chinanews
+dataset: sst
+ignore_errors: true  # 忽略所有错误。默认关闭。关闭情况下，如果算法内部发生错误，则直接报错
+language: en  # 文本以及模型的语言
+# log_adv_gen: true
+# log_to_csv: true
+# log_to_txt: true
+# max_len: 512
+# 被攻击模型名称，可以自定义，也可以从下面的列表 bert_amazon_zh,roberta_chinanews,roberta_dianping,roberta_ifeng,roberta_sst 中选择，如果不指定，则使用默认模型
+model: roberta_sst
+# model_path: null
+num_examples: 10  # 本次评测使用的样本数目，必须大于0或者等于-1(整个数据集样本数)
+# num_examples_offset: 0
+num_successful_examples: null  # 本次评测完成需要达到的攻击成功次数的下限；null表示不设下限
+# num_workers_per_device: 1
+# parallel: false  # 并行攻击，暂时不可用
+random_seed: null  # 随机数种子
+# 对抗攻击方法, 从以下支持的方法任选一个: a2t,bae,bert_attack,checklist,clare,deep_word_bug,fd,faster_genetic,genetic,hotflip,iga,input_reduction,kuleshov,pruthi,pso,pwws,text_bugger,text_fooler,viper
+recipe: text_fooler
+shuffle: true  # 否在对抗攻击前随机打乱数据集顺序
+# silent: false
+subset: test  # 对抗攻击数据集子集名称, train 或者 test
+time_out: 5.0  # 单个样本处理时间上限，单位：分钟
+query_budget: 150  # 单次攻击尝试次数上限；null表示无上限，直到攻击成功或者达到搜索方法的某些阈值而失败退出搜索
+robust_threshold: 0.6

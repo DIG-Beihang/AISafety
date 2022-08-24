@@ -13,7 +13,7 @@ CSV文件日志
 import os
 import time
 import csv
-from typing import NoReturn, List, Optional, Any
+from typing import NoReturn, List, Optional, Any, Union
 
 import pandas as pd
 
@@ -21,6 +21,7 @@ from .base import AttackLogger
 from ..attacked_text import AttackedText
 from ..misc import dict_to_str, nlp_log_dir
 from EvalBox.Attack.TextAttack.attack_result import AttackResult
+from utils.strings import LANGUAGE
 
 
 __all__ = [
@@ -35,14 +36,15 @@ class CSVLogger(AttackLogger):
 
     def __init__(
         self,
+        language: Union[str, LANGUAGE] = "zh",
         filename: Optional[str] = None,
         stdout: bool = False,
         color_method: str = "file",
     ) -> NoReturn:
         """ """
-        super().__init__()
+        super().__init__(language)
         self.filename = filename or os.path.join(
-            nlp_log_dir, f"""{time.strftime("CSVLogger-%Y-%m-%d-%H-%M-%S.csv")}"""
+            nlp_log_dir, f"""{time.strftime("AITesting-Text-%Y-%m-%d-%H-%M-%S.csv")}"""
         )
         self._default_logger.info(f"Logging to CSV at path {self.filename}")
         self.stdout = stdout

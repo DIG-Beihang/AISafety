@@ -5,7 +5,7 @@
 @LastEditors: WEN Hao
 @Description:
 @Date: 2021-08-04
-@LastEditTime: 2022-03-19
+@LastEditTime: 2022-05-13
 
 字符串的一些基本操作
 """
@@ -18,6 +18,7 @@ from typing import Union, Optional, List
 
 
 __all__ = [
+    "isascii",
     "words_from_text",
     "color_text",
     "LANGUAGE",
@@ -32,6 +33,7 @@ __all__ = [
     "color_from_output",
     "deEmojify",
     "isChinese",
+    "get_str_justify_len",
     "check_if_subword",
     "check_if_punctuations",
     "strip_BPE_artifacts",
@@ -39,6 +41,13 @@ __all__ = [
     "ReprMixin",
     "default_time_fmt",
 ]
+
+
+def isascii(s: str) -> bool:
+    try:
+        return s.isascii()
+    except AttributeError:
+        return all([ord(c) < 128 for c in s])
 
 
 def words_from_text(s: str, words_to_ignore: list = []) -> list:
@@ -343,6 +352,11 @@ def isChinese(text: str, strict: bool = False) -> bool:
     if not re.search(pattern, text):
         return False
     return True
+
+
+def get_str_justify_len(text: str, max_len: int) -> int:
+    """ """
+    return max_len - len(text.encode("GBK")) + len(text)
 
 
 def check_if_subword(token: str, model_type: str, starting: bool = False) -> bool:

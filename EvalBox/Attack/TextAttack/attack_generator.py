@@ -537,8 +537,10 @@ class AttackGenerator(AdvSampleGenerator, ABC):
             except TimeoutError:
                 print("time out")
                 result = FailedAttackResult(goal_function_result, goal_function_result)
-            except Exception:  # RuntimeError: CUDA out of memory
-                self.cpu_()
+            except Exception as e:  # RuntimeError: CUDA out of memory
+                if isinstance(e, RuntimeError) and "CUDA out of memory" in str(e):
+                    self.cpu_()
+                    print("target device is changed to CPU")
                 try:
                     with timeout(duration=60 * time_out):
                         result = self._attack(goal_function_result)

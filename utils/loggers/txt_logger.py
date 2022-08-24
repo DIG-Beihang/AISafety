@@ -13,13 +13,14 @@
 import time
 import os
 import logging
-from typing import NoReturn, Iterable, List, Optional, Any
+from typing import NoReturn, Iterable, List, Optional, Any, Union
 
 import terminaltables
 
 from .base import AttackLogger
 from ..misc import nlp_log_dir
 from EvalBox.Attack.TextAttack.attack_result import AttackResult
+from utils.strings import LANGUAGE, get_str_justify_len
 
 
 class TxtLogger(AttackLogger):
@@ -29,6 +30,7 @@ class TxtLogger(AttackLogger):
 
     def __init__(
         self,
+        language: Union[str, LANGUAGE] = "zh",
         filename: Optional[str] = None,
         stdout: bool = False,
         color_method: str = "ansi",
@@ -37,7 +39,8 @@ class TxtLogger(AttackLogger):
         super().__init__()
         self.stdout = stdout
         self.filename = filename or os.path.join(
-            nlp_log_dir, f"""{time.strftime("TxtLogger-%Y-%m-%d-%H-%M-%S.log")}"""
+            nlp_log_dir,
+            f"""{time.strftime("AITesting-Text-%Y-%m-%d-%H-%M-%S.log")}""",
         )
         self.color_method = color_method
         if not stdout:
@@ -47,7 +50,7 @@ class TxtLogger(AttackLogger):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        self.fout = logging.getLogger("NLPAttack-TxtLogger")
+        self.fout = logging.getLogger("AITesting-Text-TxtLogger")
         self.fout.setLevel(level=logging.INFO)
         self._init_file_handler()
 
@@ -64,7 +67,7 @@ class TxtLogger(AttackLogger):
         f_handler = logging.FileHandler(self.filename)
         f_handler.setLevel(logging.INFO)
         f_format = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s -\n %(message)s"
+            "%(asctime)s - %(name)s - %(levelname)s -\n%(message)s"
         )
         f_handler.setFormatter(f_format)
         self.fout.addHandler(f_handler)
@@ -88,11 +91,14 @@ class TxtLogger(AttackLogger):
 
     def log_attack_result(self, result: AttackResult, **kwargs: Any) -> NoReturn:
         self._num_results += 1
-        msg = "\n".join(
-            [
-                (" Result " + str(self.num_results)).center(110, "-"),
-                result.__str__(color_method=self.color_method),
-            ]
+        msg = (
+            "\n".join(
+                [
+                    (" Result " + str(self.num_results)).center(110, "-"),
+                    result.__str__(color_method=self.color_method),
+                ]
+            )
+            + "\n"
         )
         self.fout.info(msg)
         if self.stdout:
@@ -105,7 +111,19 @@ class TxtLogger(AttackLogger):
             table = terminaltables.AsciiTable(table_rows)
             self._default_logger.info(table.table)
         else:
-            msg = "\n".join([f"{row[0]} {row[1]}" for row in rows])
+            width, fillchar = 80, "#"
+            title = title.center(len(title) + 10, " ")
+            title = title.center(get_str_justify_len(title, width), fillchar)
+            msg = (
+                "\n"
+                + fillchar * width
+                + "\n"
+                + title
+                + "\n"
+                + fillchar * width
+                + "\n\n"
+            )
+            msg += "\n".join([f"{row[0]} {row[1]}" for row in rows]) + "\n\n"
             self.fout.info(msg)
 
     def flush(self) -> NoReturn:

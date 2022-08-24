@@ -57,6 +57,7 @@ class SST(NLPDataset):
             ],
             max_len=max_len,
         )
+        self._name = self.__name__
         self._language = LANGUAGE.ENGLISH
 
     def get_word_freq(self, use_log: bool = False) -> Dict[str, float]:

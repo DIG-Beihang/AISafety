@@ -89,6 +89,8 @@ _AITESTING_DATASETS = [
     "jd_full_train.csv.xz",
     "jd_binary_filtered.csv.gz",
     "jd_binary_filtered_tiny.csv.gz",
+    "ifeng.csv.gz",
+    "chinanews.csv.gz",
 ]
 _AITESTING_DATASETS = {k.split(".")[0]: k for k in _AITESTING_DATASETS}
 

@@ -16,32 +16,16 @@ from dataclasses import dataclass
 from argparse import ArgumentParser
 from typing import Dict, Any
 
-from utils.strings import normalize_language, LANGUAGE
-from utils.misc import module_name
+from datasets import list_datasets
+
+from utils.strings import normalize_language, LANGUAGE  # noqa: F401
+from Datasets import NLPDataset
+from const import BUILTIN_DATASETS, DATASET_NAME_MAPPING, MODEL_DEFAULT_DATASET
 
 
 __all__ = [
     "DatasetArgs",
 ]
-
-
-_BUILTIN_DATASETS = {
-    "amazon": "AmazonReviewsZH",
-    "dianping": "DianPingTiny",
-    "imdb": "IMDBReviewsTiny",
-    "jd_binary": "JDBinaryTiny",
-    "jd_full": "JDFullTiny",
-    "sst": "SST",
-}
-
-_NAME_MAPPING = {
-    "amazon": "amazon_reviews_zh",
-    "dianping": "dianping_tiny",
-    "imdb": "imdb_reviews_tiny",
-    "jd_binary": "jd_binary_tiny",
-    "jd_full": "jd_full_tiny",
-    "sst": "sst",
-}
 
 
 @dataclass
@@ -66,6 +50,7 @@ class DatasetArgs:
             help="对抗攻击数据集",
             default=default_obj.dataset,
             dest="dataset",
+            choices=list(BUILTIN_DATASETS.keys()),
         )
         ds_group.add_argument(
             "--subset",
@@ -73,6 +58,7 @@ class DatasetArgs:
             help="对抗攻击数据集子集名称",
             default=default_obj.subset,
             dest="subset",
+            choices=["train", "test"],
         )
         ds_group.add_argument(
             "--max-len",
@@ -92,17 +78,31 @@ class DatasetArgs:
         obj.max_len = args.get("max_len")
         language = normalize_language(args.get("language"))
         if obj.dataset is None:
-            if language == LANGUAGE.CHINESE:
-                obj.dataset = "jd_binary"
-            elif language == LANGUAGE.ENGLISH:
-                obj.dataset = "sst"
+            # if language == LANGUAGE.CHINESE:
+            #     obj.dataset = "jd_binary"
+            # elif language == LANGUAGE.ENGLISH:
+            #     obj.dataset = "sst"
+            # load dataset according to model
+            model_name = args.get("model")
+            assert model_name is not None, "模型名称与数据集名称不能同时为空"
+            obj.dataset = MODEL_DEFAULT_DATASET.get(model_name)
+            assert obj.dataset is not None
             print(f"未指定数据集, 将加载默认数据集 {obj.dataset}")
-        if obj.dataset in _BUILTIN_DATASETS:
+        if obj.dataset in BUILTIN_DATASETS:
             ds_cls = getattr(
-                importlib.import_module(f"Datasets.{_NAME_MAPPING[obj.dataset]}"),
-                _BUILTIN_DATASETS[obj.dataset],
+                importlib.import_module(
+                    f"Datasets.{DATASET_NAME_MAPPING[obj.dataset]}"
+                ),
+                BUILTIN_DATASETS[obj.dataset],
+            )
+            ds = ds_cls(subsets=obj.subset, max_len=obj.max_len)
+        elif obj.dataset in list_datasets():
+            ds = NLPDataset.from_huggingface_dataset(
+                obj.dataset, split=obj.subset, max_len=obj.max_len
             )
         else:
-            raise ValueError(f"{obj.dataset}不是内置数据集， 暂不支持自定义数据集")
-        ds = ds_cls(subsets=obj.subset, max_len=obj.max_len)
+            raise ValueError(
+                f"{obj.dataset}不是内置数据集或huggingface datasets中的数据集， 暂不支持自定义数据集"
+            )
+
         return ds

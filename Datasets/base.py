@@ -39,7 +39,7 @@ __all__ = [
 ]
 
 
-class NLPDataset(ReprMixin, TD):
+class NLPDataset(TD, ReprMixin):
     """ """
 
     __name__ = "NLPDataset"
@@ -81,6 +81,7 @@ class NLPDataset(ReprMixin, TD):
         """
         self._language = LANGUAGE.ENGLISH  # default language
         self._dataset = dataset
+        self._name = None
         self.input_columns = input_columns
         self.label_map = label_map
         self.label_names = label_names
@@ -159,7 +160,7 @@ class NLPDataset(ReprMixin, TD):
 
     @staticmethod
     def from_huggingface_dataset(
-        ds: Union[str, HFD], split: Optional[HFNS] = None
+        ds: Union[str, HFD], split: Optional[HFNS] = None, max_len: Optional[int] = 512
     ) -> "NLPDataset":
         """ """
         if isinstance(ds, str):
@@ -182,12 +183,15 @@ class NLPDataset(ReprMixin, TD):
                     for row in _ds[s]
                 ],
                 input_columns=input_columns,
+                max_len=max_len,
             )
         else:
             ret_ds = NLPDataset(
                 [(_gen_input(row, input_columns), row[output_column]) for row in _ds],
                 input_columns=input_columns,
+                max_len=max_len,
             )
+            ret_ds._name = _ds.info.builder_name
         return ret_ds
 
     def get_word_freq(
@@ -263,6 +267,15 @@ class NLPDataset(ReprMixin, TD):
         if len(inds) == 0:
             return text[: self.max_len]
         return text[: inds[-1]]
+
+    @property
+    def dataset_name(self) -> str:
+        return self._name
+
+    def extra_repr_keys(self) -> List[str]:
+        if self.dataset_name is not None:
+            return ["dataset_name"]
+        return super().extra_repr_keys()
 
 
 def _get_word_freq_from_text(text: str, language: LANGUAGE) -> Dict[str, float]:

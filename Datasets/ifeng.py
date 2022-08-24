@@ -4,51 +4,46 @@
 @Author: WEN Hao
 @LastEditors: WEN Hao
 @Description:
-@Date: 2021-09-23
-@LastEditTime: 2022-04-15
+@Date: 2022-07-14
+@LastEditTime: 2022-07-14
 """
-import os
+
 from typing import Union, Optional, Sequence, NoReturn, Dict
 
 import pandas as pd
-from bs4 import BeautifulSoup as BS
 
 from .base import NLPDataset
 from utils.strings import LANGUAGE
+from utils.misc import nlp_cache_dir
+from utils._download_data import download_if_needed
 
 
 __all__ = [
-    "JDFullTiny",
+    "Ifeng",
 ]
 
 
-class JDFullTiny(NLPDataset):
+class Ifeng(NLPDataset):
     """ """
 
-    __name__ = "JDFullTiny"
+    __name__ = "Ifeng"
 
     def __init__(
         self,
         subsets: Optional[Union[Sequence[str], str]] = None,
-        text_size: Optional[str] = None,
-        use_title: bool = False,
-        remove_html: bool = True,
         max_len: Optional[int] = 512,
     ) -> NoReturn:
         """ """
-        fp = os.path.dirname(os.path.abspath(__file__))
-        if text_size:
-            assert text_size.lower() in [
-                "long",
-                "xl",
-            ]
-            self._text_size = f"_{text_size.lower()}"
-        else:
-            self._text_size = ""
-        fp = os.path.join(
-            fp, "jd_full_tiny", f"jd_full_filtered{self._text_size}_tiny.csv.gz"
-        )
+        fp = nlp_cache_dir / "ifeng" / "ifeng.csv.gz"
+        if not fp.exists():
+            download_if_needed(
+                "ifeng.csv.gz",
+                source="aitesting",
+                cache_dir=nlp_cache_dir / "ifeng",
+                extract=False,
+            )
         tot_ds = pd.read_csv(fp, lineterminator="\n")
+        tot_ds.loc[:, "label"] = tot_ds.label.map(int)
         if subsets is None:
             _subsets = [
                 "train",
@@ -60,16 +55,19 @@ class JDFullTiny(NLPDataset):
             _subsets = subsets
         tot_ds = tot_ds[tot_ds.set.isin(_subsets)].reset_index(drop=True)
 
-        col = "title" if use_title else "content"
-        if remove_html:
-            tot_ds[col] = tot_ds[col].apply(lambda s: BS(s, features="lxml").get_text())
-
         super().__init__(
-            dataset=[(row[col], row["score"]) for _, row in tot_ds.iterrows()],
+            dataset=[(row["content"], row["label"]) for _, row in tot_ds.iterrows()],
             input_columns=[
-                col,
+                "content",
             ],
             label_map={idx + 1: idx for idx in range(5)},
+            label_names=[
+                "mainland China politics",
+                "International news",
+                "Taiwan - Hong Kong - Macau politics",
+                "military news",
+                "society news",
+            ],
             max_len=max_len,
         )
         self._name = self.__name__
@@ -77,10 +75,5 @@ class JDFullTiny(NLPDataset):
 
     def get_word_freq(self, use_log: bool = False) -> Dict[str, float]:
         """ """
-        fp = os.path.dirname(os.path.abspath(__file__))
-        cache_fp = os.path.join(
-            fp,
-            "jd_full_tiny",
-            f"jd_full_filtered{self._text_size}_tiny_word_freq.csv.gz",
-        )
+        cache_fp = nlp_cache_dir / "ifeng" / "ifeng_word_freq.csv.gz"
         return super().get_word_freq(use_log=use_log, cache_fp=cache_fp, parallel=False)
